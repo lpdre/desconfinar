@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#14362e"><meta name="description" content="Desconfinar: comparador de percursos pedestres GPX/KML, inclinações, desníveis e perfis altimétricos."><title>Desconfinar — Comparar caminhadas GPX/KML</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.css"><style>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#14362e"><meta name="description" content="Desconfinar: comparador de percursos pedestres GPX/KML, inclinações, desníveis e perfis altimétricos."><title>Desconfinar — Comparar caminhadas GPX/KML</title><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.css"><style>
 :root{--bg:#f5f7f5;--card:#fff;--ink:#18322b;--muted:#6c8179;--line:#e1e9e3;--deep:#14362e;--lime:#d5f5a5;--shadow:0 3px 22px rgba(16,47,37,.045);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);min-height:100vh}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #6ca9cf;outline-offset:2px}
 button{transition:background .13s ease,border-color .13s ease}header.site-head{background:var(--deep);color:#fff;min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:12px max(24px,calc((100vw - 1400px)/2));gap:20px;position:sticky;top:0;z-index:20}
@@ -19,6 +19,7 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 .analysis-section{border-top:1px solid var(--line);margin-top:17px;padding-top:10px}.analysis-grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.grade-tile{border:1px solid var(--line);background:#f8faf6;border-radius:10px;padding:12px}.grade-tile small{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}.grade-tile strong{font-size:20px}.grade-tile.up strong{color:#a56e29}.grade-tile.down strong{color:#247ab1}.analysis-location{display:flex;flex-wrap:wrap;gap:12px;color:#789086;font-size:11px;margin-top:11px}.grade-distribution{margin:8px 0}.grade-bar{display:flex;overflow:hidden;height:13px;border-radius:6px}.grade-legend{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:#5b7467}.grade-swatch{height:10px;width:10px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px}.grade-note{font-size:11px;color:#7b9084;line-height:1.65}.copyright{font-size:10px;color:#8a9a90;margin-top:14px;line-height:1.5}#slope-window{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:#fff}
 .toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);padding:12px 16px;background:#183e30;color:#fff;border-radius:12px;box-shadow:0 12px 40px #0b2a2060;z-index:50;display:none;font-size:12px;max-width:min(600px,calc(100vw - 30px));line-height:1.5}.toast.show{display:block}
 .workspace{padding-top:20px}.sidebar .upload-zone{padding:12px;margin-bottom:17px;display:flex;flex-direction:column;gap:6px}.sidebar .upload-zone .button{width:100%;background:#14362e;color:white;border-color:#14362e}.sidebar .upload-zone .demo-link{font-size:11px;padding:5px}.map-card #map{height:440px}.map-head{min-height:72px}@media(max-width:750px){.workspace{padding-top:12px}.map-card #map{height:340px}}
+.section-header>div,.map-head>div,.legend-item{min-width:0}.section-header p,.map-head span,.legend-item span:last-child{overflow-wrap:anywhere}.legend-item{max-width:100%}@media(max-width:750px){.legend{flex-direction:column;align-items:stretch}.legend-item{align-items:flex-start}.legend-item .legend-line{flex:0 0 19px;margin-top:6px}}
 @media(max-width:1000px){.hero{grid-template-columns:1fr 340px;gap:18px}.workspace{grid-template-columns:270px minmax(0,1fr)}.compare-table th:first-child,.compare-table td:first-child{width:160px}.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){header.site-head{padding:11px 15px;min-height:62px}.logo strong{font-size:17px}.logo small{font-size:9px}.hero{display:block;padding:25px 15px 18px}.hero h1{font-size:30px}.upload-zone{margin-top:21px;padding:15px}.workspace{display:flex;flex-direction:column;padding:0 12px 45px;gap:12px}.sidebar{width:100%;position:static;max-height:none;padding:15px}.main-col{width:100%;gap:12px}.section-header{padding:18px 17px 14px}.section-header h2{font-size:17px}.compare-table th:first-child,.compare-table td:first-child{width:148px}.compare-table{min-width:610px}.compare-table th,.compare-table td{padding:10px 9px;font-size:11px}.profile-card .inner{padding:16px}#overlay-profile{height:190px}.map-head{padding:12px 15px}.analysis-card{padding:16px}.metrics-grid{grid-template-columns:repeat(2,1fr)}.track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.logo-mark{width:32px;height:32px;font-size:20px}.header-upload{font-size:11px;padding:9px 10px}.track-list{grid-template-columns:1fr}.track{padding:11px}.upload-zone .button{width:100%}.hero h1{font-size:29px}.analysis-grades{grid-template-columns:1fr 1fr}.grade-tile strong{font-size:17px}}
@@ -70,10 +71,11 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 </div>
 <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 <input type="file" id="file-input" multiple accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml" hidden>
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script><script>
+<!-- MapLibre GL JS v6: carregamento ESM com fallback de CDN no script principal --><script>
 'use strict';
 const $=id=>document.getElementById(id);
 const palette=['#f16b4c','#2d8ecf','#20a573','#ad6bdd','#ec9f35','#6c78e4','#d75494','#688847','#007e86','#c66d30'];
+let maplibregl=null;
 const routes=[]; let sequence=0; let selectedId=null; let is3D=false; let isSatellite=false; let mapReady=false; let map=null;let activeToast=null;let profileSamples=[];
 const emptyGeo={type:'FeatureCollection',features:[]};
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(activeToast);activeToast=setTimeout(()=>$('toast').classList.remove('show'),5500);}
@@ -308,7 +310,7 @@ function renderOverlay(){
 function openMap(callback){if(!mapOpen){mapOpen=true;$('map-surface').hidden=false;$('map-toggle').textContent='Ocultar mapa';$('map-toggle').setAttribute('aria-expanded','true');if(!map)createMap();}
  requestAnimationFrame(()=>{if(map)map.resize();if(callback&&mapReady)callback();else if(!mapReady&&callback&&map)map.once('load',()=>{map.resize();callback();});});}
 function toggleMap(){if(mapOpen){mapOpen=false;$('map-surface').hidden=true;$('map-toggle').textContent='Abrir mapa';$('map-toggle').setAttribute('aria-expanded','false');}else openMap(()=>{if(routes.some(r=>r.visible))zoomTo(routes.filter(r=>r.visible));});}
-function createMap(){if(typeof maplibregl==='undefined'){status('Não foi possível carregar o motor do mapa. Verifica a ligação à Internet ou abre o site através de um servidor Web.',true);return;}
+function createMap(){if(!maplibregl){status('O mapa não conseguiu carregar a biblioteca cartográfica.',true);return;}
  try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
  map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);refreshMapStyles();});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
  }catch(err){status('Não foi possível iniciar o mapa: '+err.message,true);}}
@@ -328,5 +330,21 @@ $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)r
 const zone=$('dropzone');for(const target of [zone,document.body]){target.addEventListener('dragover',e=>{if(!e.dataTransfer.types.includes('Files'))return;e.preventDefault();zone.classList.add('drag');});target.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag');});target.addEventListener('drop',e=>{if(!e.dataTransfer.files.length)return;e.preventDefault();zone.classList.remove('drag');importFiles(e.dataTransfer.files);});}
 zone.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===zone){e.preventDefault();$('file-input').click();}});
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
-renderList();renderComparison();createMap();
+renderList();renderComparison();
+// A versão 6 do MapLibre só fornece o módulo ESM; o antigo ficheiro .js já não existe.
+async function loadMapEngine(){
+  const sources=[
+    'https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.mjs',
+    'https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.mjs'
+  ];
+  for(const url of sources){
+    try {
+      maplibregl=await import(url);
+      createMap();
+      return;
+    } catch(err) { console.warn('Não foi possível carregar MapLibre em',url,err); }
+  }
+  status('O mapa não conseguiu carregar a biblioteca cartográfica. Experimenta desativar o bloqueio de scripts deste site ou atualizar a página. As análises GPX continuam disponíveis.',true);
+}
+loadMapEngine();
 </script></body></html>
