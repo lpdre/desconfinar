@@ -24,11 +24,48 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 @media(max-width:1000px){.hero{grid-template-columns:1fr 340px;gap:18px}.workspace{grid-template-columns:270px minmax(0,1fr)}.compare-table th:first-child,.compare-table td:first-child{width:160px}.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){header.site-head{padding:11px 15px;min-height:62px}.logo strong{font-size:17px}.logo small{font-size:9px}.hero{display:block;padding:25px 15px 18px}.hero h1{font-size:30px}.upload-zone{margin-top:21px;padding:15px}.workspace{display:flex;flex-direction:column;padding:0 12px 45px;gap:12px}.sidebar{width:100%;position:static;max-height:none;padding:15px}.main-col{width:100%;gap:12px}.section-header{padding:18px 17px 14px}.section-header h2{font-size:17px}.compare-table th:first-child,.compare-table td:first-child{width:148px}.compare-table{min-width:610px}.compare-table th,.compare-table td{padding:10px 9px;font-size:11px}.profile-card .inner{padding:16px}#overlay-profile{height:190px}.map-head{padding:12px 15px}.analysis-card{padding:16px}.metrics-grid{grid-template-columns:repeat(2,1fr)}.track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.logo-mark{width:32px;height:32px;font-size:20px}.header-upload{font-size:11px;padding:9px 10px}.track-list{grid-template-columns:1fr}.track{padding:11px}.upload-zone .button{width:100%}.hero h1{font-size:29px}.analysis-grades{grid-template-columns:1fr 1fr}.grade-tile strong{font-size:17px}}
+
+/* Organização por vistas: a opção Tudo mantém todos os painéis na página. */
+.view-tabs{max-width:1440px;margin:0 auto;padding:14px 24px 0;display:flex;align-items:center;gap:6px}
+.view-tab{border:1px solid #dce5dd;background:#fff;color:#587064;border-radius:10px;padding:10px 20px;font-size:12px;font-weight:780}
+.view-tab:hover{background:#edf6ea}
+.view-tab.is-active{background:var(--deep);color:#fff;border-color:var(--deep)}
+.pane-hidden{display:none!important}
+.compare-table .mobile-track-key,.compare-table .mobile-value,.mobile-compare-legend{display:none}
+@media(max-width:750px){
+ .view-tabs{position:sticky;top:62px;z-index:18;background:var(--bg);padding:8px 12px;gap:5px;border-bottom:1px solid var(--line)}
+ .view-tab{flex:1;min-width:0;padding:9px 5px;border-radius:8px;font-size:11px}
+ .workspace{padding-top:10px}
+ .compare-scroll{overflow-x:auto}
+ .compare-table{min-width:0;width:100%;table-layout:fixed}
+ .compare-table th:first-child,.compare-table td:first-child{width:118px;max-width:118px;box-shadow:1px 0 0 #edf1ec}
+ .compare-table th,.compare-table td{padding:8px 4px;font-size:10px;line-height:1.3}
+ .compare-table td:not(:first-child){white-space:nowrap;font-size:10px;letter-spacing:-.22px}
+ .compare-table thead th{text-align:center}
+ .compare-table .column-name,.compare-table .desktop-value{display:none}
+ .compare-table .mobile-value{display:inline}
+ .compare-table .mobile-track-key{display:inline-flex;align-items:center;justify-content:center;color:#fff;border:1px solid #ffffff80;text-shadow:0 1px 2px #15261e55;width:23px;height:23px;padding:0;border-radius:50%;font-weight:850;font-size:11px;box-shadow:0 0 0 1px #17392d25}
+ .mobile-compare-legend{display:grid;gap:5px;padding:10px 11px 13px;border-top:1px solid var(--line)}
+ .mobile-legend-item{display:flex;align-items:center;gap:8px;min-width:0;font-size:10px;color:#557063}
+ .mobile-legend-key{width:19px;height:19px;display:grid;place-items:center;flex-shrink:0;border-radius:50%;color:#fff;font-size:10px;font-weight:850}
+ .mobile-legend-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:385px){
+ .compare-table th:first-child,.compare-table td:first-child{width:103px;max-width:103px}
+ .compare-table th,.compare-table td{padding:8px 3px}
+ .compare-table td:not(:first-child){font-size:9px}
+}
 </style></head><body>
 <header class="site-head">
   <div class="logo"><div class="logo-mark" aria-hidden="true">⌁</div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
   <button id="top-upload" class="button dark header-upload">+ Importar GPX / KML</button>
 </header>
+<nav class="view-tabs" aria-label="Vista do site">
+  <button class="view-tab is-active" type="button" data-view="all" aria-pressed="true">Tudo</button>
+  <button class="view-tab" type="button" data-view="map" aria-pressed="false">Mapa</button>
+  <button class="view-tab" type="button" data-view="compare" aria-pressed="false">Comparar</button>
+  <button class="view-tab" type="button" data-view="analyse" aria-pressed="false">Analisar</button>
+</nav>
 <div class="workspace">
   <aside class="card sidebar" aria-label="Percursos disponíveis">
     <div class="sidebar-title"><h2>Percursos</h2><div style="display:flex;align-items:center;gap:8px"><span class="count" id="route-count">0 trilhos</span><button class="button tiny quiet" id="clear-all" title="Remover todos os percursos">Limpar</button></div></div>
@@ -36,23 +73,23 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
     
   </aside>
   <main class="main-col">
-    <section class="card" aria-labelledby="compare-title">
+    <section class="card" data-pane="compare" aria-labelledby="compare-title">
       <div class="section-header"><div><h2 id="compare-title">Comparação direta</h2></div><span class="comparison-badge" id="compare-count">0 / 4</span></div>
       <div class="comparison" id="comparison"></div>
       
     </section>
-    <section class="card map-card" aria-labelledby="map-title">
+    <section class="card map-card" data-pane="map" aria-labelledby="map-title">
       <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa 2D dos percursos</strong></div><button class="button tiny" id="map-toggle" aria-expanded="true">Ocultar mapa</button></div>
       <div id="map-surface"><div id="map"></div><div class="map-tools">
         <div class="mode-switch" role="group" aria-label="Modo do mapa"><button id="mode-2d" class="active" aria-pressed="true">Mapa 2D</button><button id="mode-3d" aria-pressed="false">Relevo 3D</button></div>
         <div class="map-actions"><button id="satellite-mode" title="Vista satélite" aria-label="Vista satélite">Satélite</button><button id="fit-all-map" title="Enquadrar percursos" aria-label="Enquadrar percursos">Ver todos</button><button id="reset-view" title="Centrar na Freita">Freita</button></div>
       </div><div class="map-status" id="map-status" role="status"></div></div>
     </section>
-    <section class="card profile-card" aria-labelledby="overlay-title">
+    <section class="card profile-card" data-pane="compare" aria-labelledby="overlay-title">
       <div class="section-header"><div><h2 id="overlay-title">Perfis altimétricos sobrepostos</h2></div></div>
       <div class="inner"><div class="legend" id="overlay-legend"></div><canvas id="overlay-profile" role="img" aria-label="Comparação dos perfis de altitude"></canvas><div id="overlay-caption" aria-live="polite"></div></div>
     </section>
-    <section class="card analysis-card hide" id="details" aria-labelledby="detail-name">
+    <section class="card analysis-card hide" data-pane="analyse" id="details" aria-labelledby="detail-name">
       <div class="panel-head"><div><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div>
       <div class="panel-main">
         <div class="metrics-grid" id="detail-metrics"></div>
@@ -201,7 +238,24 @@ function zoomTo(rs){if(!mapReady){toast('O mapa ainda está a iniciar.');return;
 function routeCountText(n){return n===1?'1 trilho':n+' trilhos';}
 function el(tag,cls,text){const a=document.createElement(tag);if(cls)a.className=cls;if(text!==undefined)a.textContent=text;return a;}
 
-let mapOpen=true,overlayHover=null;
+let mapOpen=true,overlayHover=null,currentView='all';
+function setView(view){
+  if(!['all','map','compare','analyse'].includes(view))return;
+  currentView=view;
+  for(const button of document.querySelectorAll('.view-tab')){
+    const active=button.dataset.view===view;button.classList.toggle('is-active',active);button.setAttribute('aria-pressed',String(active));
+  }
+  for(const pane of document.querySelectorAll('[data-pane]')){
+    pane.classList.toggle('pane-hidden',view!=='all'&&pane.dataset.pane!==view);
+  }
+  if(view==='analyse' && !selectedId && routes.length){selectRoute((routes.find(r=>r.visible)||routes[0]).id);}
+  requestAnimationFrame(()=>{
+    if((view==='map'||view==='all')&&mapOpen&&map){map.resize();}
+    if(view==='compare'||view==='all')renderOverlay();
+    if((view==='analyse'||view==='all')&&selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}
+  });
+}
+
 function pct(n){return n==null||!Number.isFinite(n)?'—':n.toLocaleString('pt-PT',{maximumFractionDigits:1,minimumFractionDigits:1})+' %';}
 function renderList(){
   const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
@@ -221,14 +275,14 @@ function renderList(){
     top.append(checkbox,dot,body);item.append(top);
     const metrics=el('div','track-metrics');for(const [label,value] of [['Dist.',fmtKm(r.stats.distance)],['D+',r.stats.hasElevation?fmtM(r.stats.ascent):'—']]){const m=el('span');m.append(document.createTextNode(label+' '),el('b',null,value));metrics.append(m);}item.append(metrics);
     const actions=el('div','track-actions');const details=el('button',null,'Analisar');details.onclick=()=>selectRoute(r.id);
-    const showMap=el('button',null,'Ver no mapa');showMap.onclick=()=>{if(!r.visible){if(routes.filter(x=>x.visible).length>=4){toast('Desmarca um percurso para veres este em conjunto.');return;}r.visible=true;renderList();renderComparison();}openMap(()=>zoomTo([r]));};
+    const showMap=el('button',null,'Ver no mapa');showMap.onclick=()=>{if(!r.visible){if(routes.filter(x=>x.visible).length>=4){toast('Desmarca um percurso para veres este em conjunto.');return;}r.visible=true;renderList();renderComparison();}setView('map');openMap(()=>zoomTo([r]));};
     const remove=el('button',null,'Remover');remove.onclick=()=>removeRoute(r.id);
     actions.append(details,showMap,remove);item.append(actions);list.append(item);
   }
 }
 function selectRoute(id){
   const r=routes.find(x=>x.id===id);if(!r)return;selectedId=id;
-  $('details').classList.remove('hide');$('detail-name').textContent=r.name;$('detail-name').style.color=r.color;
+  $('details').classList.remove('hide');if(currentView!=='all'&&currentView!=='analyse')setView('analyse');$('detail-name').textContent=r.name;$('detail-name').style.color=r.color;
   $('detail-origin').textContent=r.demo?'Exemplo fictício para testar a comparação':r.format+' · '+r.sourceName;
   const grid=$('detail-metrics');grid.replaceChildren();const st=r.stats;
   for(const [label,value] of [['Distância',fmtKm(st.distance)],['Desnível D+',st.hasElevation?fmtM(st.ascent):'—'],['Desnível D−',st.hasElevation?fmtM(st.descent):'—'],['Altitude mínima',fmtM(st.minEle)],['Altitude máxima',fmtM(st.maxEle)],['Tempo total',fmtTime(st.duration)],['Tempo em movimento',fmtTime(r.motion.movingMs)],['Velocidade em movimento',r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1})+' km/h':'—'],['Subida por km',st.hasElevation&&st.distance>0?Math.round(st.ascent/(st.distance/1000))+' m/km':'—']]){const cell=el('div','metric');cell.append(el('span',null,label),el('strong',null,value));grid.append(cell);}
@@ -259,28 +313,58 @@ function renderProfile(r){const c=$('profile');const rect=c.getBoundingClientRec
  c.onmouseleave=()=>{$('chart-label').textContent='';map?.getSource('profile-cursor')?.setData(emptyGeo);};
 }
 
+
 function renderComparison(){
-  const chosen=routes.filter(r=>r.visible).slice(0,4);$('compare-count').textContent=chosen.length+' / 4';
+  const chosen=routes.filter(r=>r.visible).slice(0,4);
+  $('compare-count').textContent=chosen.length+' / 4';
   const slot=$('comparison');slot.replaceChildren();
   if(!chosen.length){slot.append(el('div','welcome',routes.length?'Sem percursos selecionados.':'Sem percursos.'));renderOverlay();return;}
-  const scroll=el('div','compare-scroll');const table=el('table','compare-table');const head=el('thead'),row=el('tr');
-  row.append(el('th',null,'Indicador'));
-  for(const r of chosen){const th=el('th');const n=el('div','column-name');const dot=el('span','color-dot');dot.style.backgroundColor=r.color;const main=el('div');const link=el('button',null,r.name);link.title='Abrir análise detalhada';link.onclick=()=>selectRoute(r.id);main.append(link,el('div','col-meta',r.demo?'Demonstração':'GPX / KML'));n.append(dot,main);th.append(n);row.append(th);}
-  head.append(row);table.append(head);
+  const scroller=el('div','compare-scroll'),table=el('table','compare-table');
+  const thead=el('thead'),trHead=el('tr');trHead.append(el('th',null,'Indicador'));
+  for(let i=0;i<chosen.length;i++){
+    const r=chosen[i],th=el('th'),column=el('div','column-name');
+    const dot=el('span','color-dot');dot.style.backgroundColor=r.color;
+    const desktop=el('div','desktop-track-name');const link=el('button',null,r.name);
+    link.title='Analisar '+r.name;link.onclick=()=>selectRoute(r.id);
+    desktop.append(link);column.append(dot,desktop);th.append(column);
+    const mobile=el('button','mobile-track-key',String(i+1));mobile.style.backgroundColor=r.color;
+    mobile.setAttribute('aria-label','Analisar percurso '+(i+1)+': '+r.name);
+    mobile.title=r.name;mobile.onclick=()=>selectRoute(r.id);th.append(mobile);trHead.append(th);
+  }
+  thead.append(trHead);table.append(thead);
+  const compactKm=r=>r.stats.distance>0?(r.stats.distance/1000).toLocaleString('pt-PT',{maximumFractionDigits:1}):'—';
+  const compactM=n=>n==null?'—':Math.round(n).toLocaleString('pt-PT');
+  const compactPct=p=>p==null||!Number.isFinite(p)?'—':p.toLocaleString('pt-PT',{maximumFractionDigits:1})+'%';
   const data=[
-    ['Distância',r=>fmtKm(r.stats.distance)],
-    ['Desnível positivo (D+)',r=>r.stats.hasElevation?fmtM(r.stats.ascent):'—'],
-    ['Desnível negativo (D−)',r=>r.stats.hasElevation?fmtM(r.stats.descent):'—'],
-    ['D+ por km',r=>r.stats.hasElevation&&r.stats.distance>0?Math.round(r.stats.ascent/(r.stats.distance/1000))+' m/km':'—'],
-    ['Inclinação média a subir',r=>pct(r.advanced.averageUp)],
-    ['Inclinação média a descer',r=>pct(r.advanced.averageDown)],
-    ['Subida máx. em 200 m',r=>fmtGrade(r.advanced.slopes[200].up)],
-    ['Descida máx. em 200 m',r=>fmtGrade(r.advanced.slopes[200].down)],
-    ['Distância em subidas >10%',r=>r.advanced.covered?pct(r.advanced.distribution[4]):'—'],
-    ['Tempo em movimento',r=>fmtTime(r.motion.movingMs)],
-    ['Velocidade em movimento',r=>r.motion.avgKmh?pct(r.motion.avgKmh).replace(' %',' km/h'):'—']
+    ['Distância','Dist. (km)',r=>fmtKm(r.stats.distance),compactKm],
+    ['Desnível positivo (D+)','D+ (m)',r=>r.stats.hasElevation?fmtM(r.stats.ascent):'—',r=>r.stats.hasElevation?compactM(r.stats.ascent):'—'],
+    ['Desnível negativo (D−)','D− (m)',r=>r.stats.hasElevation?fmtM(r.stats.descent):'—',r=>r.stats.hasElevation?compactM(r.stats.descent):'—'],
+    ['D+ por km','D+/km',r=>r.stats.hasElevation&&r.stats.distance>0?Math.round(r.stats.ascent/(r.stats.distance/1000))+' m/km':'—',r=>r.stats.hasElevation&&r.stats.distance>0?compactM(r.stats.ascent/(r.stats.distance/1000)):'—'],
+    ['Inclinação média a subir','Subida méd.',r=>pct(r.advanced.averageUp),r=>compactPct(r.advanced.averageUp)],
+    ['Inclinação média a descer','Descida méd.',r=>pct(r.advanced.averageDown),r=>compactPct(r.advanced.averageDown)],
+    ['Subida máx. em 200 m','↑ máx. 200m',r=>fmtGrade(r.advanced.slopes[200].up),r=>r.advanced.slopes[200].up?compactPct(Math.abs(r.advanced.slopes[200].up.grade)):'—'],
+    ['Descida máx. em 200 m','↓ máx. 200m',r=>fmtGrade(r.advanced.slopes[200].down),r=>r.advanced.slopes[200].down?compactPct(Math.abs(r.advanced.slopes[200].down.grade)):'—'],
+    ['Distância em subidas >10%','↑ >10%',r=>r.advanced.covered?pct(r.advanced.distribution[4]):'—',r=>r.advanced.covered?compactPct(r.advanced.distribution[4]):'—'],
+    ['Tempo em movimento','T. mov.',r=>fmtTime(r.motion.movingMs),r=>fmtTime(r.motion.movingMs)],
+    ['Velocidade em movimento','Vel. (km/h)',r=>r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1})+' km/h':'—',r=>r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1}):'—']
   ];
-  const body=el('tbody');for(const [label,calc] of data){const tr=el('tr');tr.append(el('td',null,label));for(const r of chosen)tr.append(el('td',null,calc(r)));body.append(tr);}table.append(body);scroll.append(table);slot.append(scroll);renderOverlay();
+  const tbody=el('tbody');
+  for(const [label,short,fullValue,shortValue] of data){
+    const row=el('tr'),nameCell=el('td');
+    nameCell.append(el('span','desktop-value',label),el('span','mobile-value',short));row.append(nameCell);
+    for(const route of chosen){
+      const cell=el('td');cell.append(el('span','desktop-value',fullValue(route)),el('span','mobile-value',shortValue(route)));row.append(cell);
+    }
+    tbody.append(row);
+  }
+  table.append(tbody);scroller.append(table);slot.append(scroller);
+  const legend=el('div','mobile-compare-legend');
+  for(let i=0;i<chosen.length;i++){
+    const r=chosen[i],item=el('div','mobile-legend-item');
+    const number=el('span','mobile-legend-key',String(i+1));number.style.backgroundColor=r.color;
+    const name=el('span','mobile-legend-name',r.name);name.title=r.name;item.append(number,name);legend.append(item);
+  }
+  slot.append(legend);renderOverlay();
 }
 function profileAltitudeAt(r,d){const p=r.stats.profile.filter(x=>Number.isFinite(x.e));if(p.length<2||d<p[0].d||d>p[p.length-1].d)return null;let lo=0,hi=p.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(p[mid].d<d)lo=mid+1;else hi=mid;}const b=p[lo],a=p[Math.max(0,lo-1)];if(a===b||b.d===a.d)return b.e;return a.e+(b.e-a.e)*(d-a.d)/(b.d-a.d);}
 function renderOverlay(){
@@ -308,6 +392,7 @@ function createMap(){if(!maplibregl){status('O mapa não conseguiu carregar a bi
  try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
  map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);refreshMapStyles();});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
  }catch(err){status('Não foi possível iniciar o mapa: '+err.message,true);}}
+document.querySelectorAll('.view-tab').forEach(button=>{button.onclick=()=>setView(button.dataset.view);});
 $('top-upload').onclick=()=>$('file-input').click();
 $('file-input').onchange=e=>{importFiles(e.target.files);e.target.value='';};
 $('clear-all').onclick=()=>{if(routes.length&&confirm('Remover todos os percursos desta sessão?'))clearAll();};
@@ -317,7 +402,7 @@ $('mode-2d').onclick=()=>setMode(false);
 $('mode-3d').onclick=()=>setMode(true);
 $('fit-all-map').onclick=()=>zoomTo(routes.filter(r=>r.visible));
 $('reset-view').onclick=()=>{if(mapReady)map.flyTo({center:[-8.265,40.868],zoom:11.5,pitch:is3D?60:0,duration:950});};
-$('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');renderList();refreshMapStyles();};
+$('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');renderList();refreshMapStyles();if(currentView==='analyse')setView('all');};
 $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
 renderList();renderComparison();
