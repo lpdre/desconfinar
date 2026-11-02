@@ -18,6 +18,7 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 .analysis-card{padding:20px 22px 24px}.analysis-card.hide{display:none}.panel-head{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.panel-name{font-weight:830;font-size:17px;overflow-wrap:anywhere}.panel-sub{font-size:11px;color:var(--muted);margin-top:4px}.panel-dismiss{border:1px solid var(--line);border-radius:8px;background:#fff;width:31px;height:31px;font-size:20px;color:#67796d}.panel-main{padding-top:17px}.metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:20px}.metric{border:1px solid var(--line);border-radius:10px;background:#f8fbf8;padding:12px}.metric span{display:block;font-size:10px;color:#718678;margin-bottom:5px}.metric strong{font-size:16px;white-space:nowrap}.chart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:13px 0 7px}.chart-head strong{font-size:12px}.chart-head small{font-size:10px;color:var(--muted)}#profile{display:block;width:100%;height:150px}.chart-foot{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 .analysis-section{border-top:1px solid var(--line);margin-top:17px;padding-top:10px}.analysis-grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.grade-tile{border:1px solid var(--line);background:#f8faf6;border-radius:10px;padding:12px}.grade-tile small{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}.grade-tile strong{font-size:20px}.grade-tile.up strong{color:#a56e29}.grade-tile.down strong{color:#247ab1}.analysis-location{display:flex;flex-wrap:wrap;gap:12px;color:#789086;font-size:11px;margin-top:11px}.grade-distribution{margin:8px 0}.grade-bar{display:flex;overflow:hidden;height:13px;border-radius:6px}.grade-legend{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:#5b7467}.grade-swatch{height:10px;width:10px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px}.grade-note{font-size:11px;color:#7b9084;line-height:1.65}.copyright{font-size:10px;color:#8a9a90;margin-top:14px;line-height:1.5}#slope-window{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:#fff}
 .toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);padding:12px 16px;background:#183e30;color:#fff;border-radius:12px;box-shadow:0 12px 40px #0b2a2060;z-index:50;display:none;font-size:12px;max-width:min(600px,calc(100vw - 30px));line-height:1.5}.toast.show{display:block}
+.workspace{padding-top:20px}.sidebar .upload-zone{padding:12px;margin-bottom:17px;display:flex;flex-direction:column;gap:6px}.sidebar .upload-zone .button{width:100%;background:#14362e;color:white;border-color:#14362e}.sidebar .upload-zone .demo-link{font-size:11px;padding:5px}.map-card #map{height:440px}.map-head{min-height:72px}@media(max-width:750px){.workspace{padding-top:12px}.map-card #map{height:340px}}
 @media(max-width:1000px){.hero{grid-template-columns:1fr 340px;gap:18px}.workspace{grid-template-columns:270px minmax(0,1fr)}.compare-table th:first-child,.compare-table td:first-child{width:160px}.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:750px){header.site-head{padding:11px 15px;min-height:62px}.logo strong{font-size:17px}.logo small{font-size:9px}.hero{display:block;padding:25px 15px 18px}.hero h1{font-size:30px}.upload-zone{margin-top:21px;padding:15px}.workspace{display:flex;flex-direction:column;padding:0 12px 45px;gap:12px}.sidebar{width:100%;position:static;max-height:none;padding:15px}.main-col{width:100%;gap:12px}.section-header{padding:18px 17px 14px}.section-header h2{font-size:17px}.compare-table th:first-child,.compare-table td:first-child{width:148px}.compare-table{min-width:610px}.compare-table th,.compare-table td{padding:10px 9px;font-size:11px}.profile-card .inner{padding:16px}#overlay-profile{height:190px}.map-head{padding:12px 15px}.analysis-card{padding:16px}.metrics-grid{grid-template-columns:repeat(2,1fr)}.track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.logo-mark{width:32px;height:32px;font-size:20px}.header-upload{font-size:11px;padding:9px 10px}.track-list{grid-template-columns:1fr}.track{padding:11px}.upload-zone .button{width:100%}.hero h1{font-size:29px}.analysis-grades{grid-template-columns:1fr 1fr}.grade-tile strong{font-size:17px}}
@@ -26,16 +27,12 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
   <div class="logo"><div class="logo-mark" aria-hidden="true">⌁</div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
   <button id="top-upload" class="button dark header-upload">+ Importar GPX / KML</button>
 </header>
-<section class="hero" aria-labelledby="hero-title">
-  <div><div class="eyebrow">O teu comparador de percursos · versão 0.3</div><h1 id="hero-title">Os trilhos, lado a lado.</h1><p>Carrega vários GPX ou KML, <span class="hero-emph">escolhe até quatro caminhadas</span> e compara distância, desnível, inclinação e perfis altimétricos no mesmo ecrã. O mapa é opcional.</p></div>
-  <div class="upload-zone" id="dropzone" tabindex="0" aria-label="Arrastar ou selecionar ficheiros GPX e KML">
-    <div class="upload-copy"><strong>Junta os teus percursos</strong><small>Arrasta ficheiros .gpx / .kml para aqui<br>ou usa o botão</small></div>
-    <button class="button" id="choose-files">Escolher ficheiros</button>
-    <div style="width:100%;display:flex;justify-content:flex-end"><button class="demo-link" id="demo-btn">Experimentar com 3 exemplos fictícios</button></div>
-  </div>
-</section>
 <div class="workspace">
   <aside class="card sidebar" aria-label="Percursos disponíveis">
+    <div class="upload-zone" id="dropzone" tabindex="0" aria-label="Importar GPX/KML por arrastar e largar">
+      <button class="button" id="choose-files">+ Importar GPX / KML</button>
+      <button class="demo-link" id="demo-btn">Carregar 3 exemplos para testar</button>
+    </div>
     <div class="sidebar-title"><h2>Percursos</h2><span class="count" id="route-count">0 trilhos</span></div>
     <p class="sidebar-help">Assinala as caixas dos trilhos que queres <b>comparar</b>. Máximo de quatro de cada vez. Clica no nome para ver os detalhes.</p>
     <div class="search-tools"><input id="search" type="search" placeholder="Procurar pelo nome…" aria-label="Filtrar trilhos" autocomplete="off"><button class="button tiny quiet" id="clear-all" title="Remover ficheiros da sessão">Limpar</button></div>
@@ -48,16 +45,16 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
       <div class="comparison" id="comparison"></div>
       <p class="comparison-note">Comparação de traçados, não uma classificação automática de dificuldade. D+ e inclinações são aproximados; velocidades exigem registos de tempo.</p>
     </section>
-    <section class="card profile-card" aria-labelledby="overlay-title">
-      <div class="section-header"><div><span class="section-index">02 · VER AS DIFERENÇAS</span><h2 id="overlay-title">Perfis altimétricos sobrepostos</h2><p>Todos na mesma escala de distância e altitude, para perceberes onde se distinguem.</p></div></div>
-      <div class="inner"><div class="legend" id="overlay-legend"></div><canvas id="overlay-profile" role="img" aria-label="Comparação dos perfis de altitude"></canvas><div id="overlay-caption" aria-live="polite">Seleciona percursos com altitude para comparar os perfis.</div></div>
-    </section>
     <section class="card map-card" aria-labelledby="map-title">
-      <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa dos percursos</strong><span>Apenas se quiseres ver os traçados sobrepostos no terreno.</span></div><button class="button tiny" id="map-toggle" aria-expanded="false">Abrir mapa</button></div>
-      <div id="map-surface" hidden><div id="map"></div><div class="map-tools">
+      <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa 2D dos percursos</strong><span>Traçados selecionados, sobrepostos por cores.</span></div><button class="button tiny" id="map-toggle" aria-expanded="true">Ocultar mapa</button></div>
+      <div id="map-surface"><div id="map"></div><div class="map-tools">
         <div class="mode-switch" role="group" aria-label="Modo do mapa"><button id="mode-2d" class="active" aria-pressed="true">Mapa 2D</button><button id="mode-3d" aria-pressed="false">Relevo 3D</button></div>
         <div class="map-actions"><button id="satellite-mode" title="Vista satélite" aria-label="Vista satélite">Satélite</button><button id="fit-all-map" title="Enquadrar percursos" aria-label="Enquadrar percursos">Ver todos</button><button id="reset-view" title="Centrar na Freita">Freita</button></div>
       </div><div class="map-status" id="map-status" role="status"></div></div>
+    </section>
+    <section class="card profile-card" aria-labelledby="overlay-title">
+      <div class="section-header"><div><span class="section-index">02 · VER AS DIFERENÇAS</span><h2 id="overlay-title">Perfis altimétricos sobrepostos</h2><p>Todos na mesma escala de distância e altitude, para perceberes onde se distinguem.</p></div></div>
+      <div class="inner"><div class="legend" id="overlay-legend"></div><canvas id="overlay-profile" role="img" aria-label="Comparação dos perfis de altitude"></canvas><div id="overlay-caption" aria-live="polite">Seleciona percursos com altitude para comparar os perfis.</div></div>
     </section>
     <section class="card analysis-card hide" id="details" aria-labelledby="detail-name">
       <div class="panel-head"><div><span class="section-index">03 · UM PERCURSO EM DETALHE</span><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div>
@@ -207,7 +204,7 @@ function zoomTo(rs){if(!mapReady){toast('O mapa ainda está a iniciar.');return;
 function routeCountText(n){return n===1?'1 trilho':n+' trilhos';}
 function el(tag,cls,text){const a=document.createElement(tag);if(cls)a.className=cls;if(text!==undefined)a.textContent=text;return a;}
 
-let mapOpen=false,overlayHover=null;
+let mapOpen=true,overlayHover=null;
 function pct(n){return n==null||!Number.isFinite(n)?'—':n.toLocaleString('pt-PT',{maximumFractionDigits:1,minimumFractionDigits:1})+' %';}
 function renderList(){
   const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
@@ -331,5 +328,5 @@ $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)r
 const zone=$('dropzone');for(const target of [zone,document.body]){target.addEventListener('dragover',e=>{if(!e.dataTransfer.types.includes('Files'))return;e.preventDefault();zone.classList.add('drag');});target.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag');});target.addEventListener('drop',e=>{if(!e.dataTransfer.files.length)return;e.preventDefault();zone.classList.remove('drag');importFiles(e.dataTransfer.files);});}
 zone.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===zone){e.preventDefault();$('file-input').click();}});
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
-renderList();renderComparison();
+renderList();renderComparison();createMap();
 </script></body></html>
