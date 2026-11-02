@@ -315,17 +315,6 @@ function createMap(){if(typeof maplibregl==='undefined'){status('Não foi possí
  try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
  map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);refreshMapStyles();});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
  }catch(err){status('Não foi possível iniciar o mapa: '+err.message,true);}}
-$('choose-files').onclick=$('top-upload').onclick=()=>$('file-input').click();$('file-input').onchange=e=>{importFiles(e.target.files);e.target.value='';};$('demo-btn').onclick=loadDemo;$('satellite-mode').onclick=toggleSatellite;$('mode-2d').onclick=()=>setMode(false);$('mode-3d').onclick=()=>setMode(true);$('fit-all-map').onclick=$('fit-all-list').onclick=()=>zoomTo(routes.filter(r=>r.visible));$('clear-all').onclick=()=>{if(routes.length&&confirm('Remover todos os percursos desta sessão?'))clearAll();};$('reset-view').onclick=()=>{if(mapReady)map.flyTo({center:[-8.265,40.868],zoom:11.5,pitch:is3D?60:0,duration:950});};$('search').oninput=renderList;$('close-details').onclick=()=>{$('details').classList.add('hide');selectedId=null;renderList();refreshMapStyles();};
-$('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
-$('toggle-comparison').onclick=()=>{const c=$('comparison');c.hidden=!c.hidden;$('toggle-comparison').textContent=c.hidden?'Mostrar tabela':'Ocultar tabela';if(!c.hidden)renderComparison();};
-const zone=$('dropzone');for(const target of [zone,$('map')]){target.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});target.addEventListener('dragleave',e=>{e.preventDefault();if(!zone.contains(e.relatedTarget))zone.classList.remove('drag');});target.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');if(e.dataTransfer.files.length)importFiles(e.dataTransfer.files);});}
-zone.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===zone){e.preventDefault();$('file-input').click();}});
-window.addEventListener('resize',()=>{if(selectedId){const r=routes.find(r=>r.id===selectedId);if(r)renderProfile(r);}map?.resize();});
-window.addEventListener('error',ev=>{if(ev.message?.includes('ResizeObserver'))return;});
-renderList();createMap();
-</script>
-</body>
-</html
 $('choose-files').onclick=$('top-upload').onclick=()=>$('file-input').click();
 $('file-input').onchange=e=>{importFiles(e.target.files);e.target.value='';};
 $('demo-btn').onclick=()=>{loadDemo();};
