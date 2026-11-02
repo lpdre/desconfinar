@@ -1,0 +1,3 @@
+# Desconfinar é um site HTML estático: publicar a raiz, sem comando de build.
+[build]
+  publish = "."
