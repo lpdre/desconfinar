@@ -2,6 +2,10 @@
 
 Site pessoal, simples e independente, para **analisar e comparar caminhadas** a partir de ficheiros GPX/KML. Não é um navegador GPS nem uma aplicação para bicicletas, motas, carros ou escalada.
 
+## Organização do ecrã
+
+O site abre por defeito em **Tudo**, com comparação, mapa 2D e perfil altimétrico na mesma página. Os separadores **Mapa**, **Comparar** e **Analisar** permitem isolar o conteúdo quando for mais cómodo, especialmente no telemóvel. Na comparação em ecrãs pequenos, as colunas usam círculos com a cor e o número do percurso; os nomes completos estão na legenda por baixo. O botão único para importar GPX/KML está no cabeçalho.
+
 ## Como experimentar
 
 1. Abre o site e seleciona **Escolher ficheiros**. Podes importar vários GPX/KML de uma vez.
