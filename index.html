@@ -1,222 +1,79 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#102326">
-  <meta name="description" content="Analisador de GPX/KML de caminhadas: inclinações, desníveis, tempos em movimento e comparação de percursos.">
-  <title>Desconfinar — Análise de caminhadas GPX/KML</title>
-  <link rel="preconnect" href="https://tiles.openfreemap.org">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.css">
-  <style>
-    :root { --bg:#f5f6f2; --ink:#203033; --muted:#738184; --line:#e5eae5; --sea:#102c2e; --mint:#c6fc7c; --white:#fff; --shadow:0 8px 32px rgba(15,41,37,.12); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); }
-    * { box-sizing:border-box; }
-    html,body { margin:0; height:100%; min-height:100%; overflow:hidden; }
-    button,input { font:inherit; }
-    button { cursor:pointer; }
-    button:focus-visible,input:focus-visible,[tabindex]:focus-visible { outline:3px solid #83bfe0; outline-offset:2px; }
-    button:disabled { cursor:not-allowed; opacity:.5; }
-    .app { display:grid; height:100vh; height:100dvh; grid-template-rows:65px minmax(0,1fr); background:var(--bg); }
-    header { z-index:10; background:var(--sea); padding:0 22px; display:flex; align-items:center; justify-content:space-between; gap:16px; color:white; box-shadow:0 3px 12px #061c1e17; }
-    .brand { display:flex; align-items:center; gap:13px; white-space:nowrap; }
-    .brand-symbol { width:35px; height:35px; flex-shrink:0; border-radius:11px; background:var(--mint); display:grid;place-items:center; }
-    .brand-symbol svg { width:25px; height:25px; }
-    .brand strong { display:block; letter-spacing:-.55px; font-size:18px; line-height:1.12; }
-    .brand small { display:block; letter-spacing:.5px; text-transform:uppercase; font-size:9px; color:#c7d7d1; margin-top:3px; }
-    .header-actions { display:flex; align-items:center; gap:12px; }
-    .header-note { color:#bdd0ca; font-size:12px; }
-    .btn { appearance:none; border:1px solid transparent; padding:11px 15px; border-radius:11px; font-weight:700; font-size:13px; white-space:nowrap; display:inline-flex;align-items:center;justify-content:center;gap:8px; transition:background .18s,transform .18s; }
-    .btn:hover { transform:translateY(-1px); }
-    .btn-primary { background:var(--mint); color:#163526; }
-    .btn-primary:hover { background:#d9ffad; }
-    .btn-secondary { background:white; color:#29403d; border-color:var(--line); }
-    .btn-secondary:hover { background:#f2f6ef; }
-    .btn-ghost { background:transparent; color:#55696b; border-color:var(--line); }
-    .btn-ghost:hover { background:#eef2eb; }
-    .btn-mini { padding:7px 9px; font-size:12px; border-radius:8px; }
-    .btn-icon { display:grid;place-items:center; padding:8px; width:35px;height:35px; border:1px solid #e4eae5; background:white; color:#506466; border-radius:9px; }
-    .btn-icon:hover { background:#f3f7ee; }
-    svg.icon { width:17px;height:17px; flex-shrink:0; fill:none; stroke:currentColor; stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round; }
-    main { min-height:0; display:grid;grid-template-columns:368px minmax(0,1fr); }
-    aside { background:#fff; border-right:1px solid #dde6df; min-height:0; display:flex;flex-direction:column; overflow:hidden; z-index:2; }
-    .sidebar-scroll { padding:23px 21px; overflow-y:auto; overscroll-behavior:contain; height:100%; }
-    .eyebrow { font-size:10px; letter-spacing:1.55px; text-transform:uppercase; color:#6b8780; font-weight:800; }
-    h1 { font-size:25px; line-height:1.17; letter-spacing:-.9px; margin:10px 0 10px; font-weight:790; }
-    .intro { font-size:13px; color:#708081;line-height:1.58; margin:0 0 20px; }
-    .upload-zone { border:1.5px dashed #afcdb5; background:#f6fbf3; border-radius:15px; padding:17px 15px; text-align:center; transition:all .15s; }
-    .upload-zone.drag { border-color:#498766; background:#e7f7df; transform:scale(.997); }
-    .upload-icon { display:inline-grid; place-items:center; width:40px; height:40px; border-radius:12px; background:#e5f3dd; color:#3f8063; margin-bottom:5px; }
-    .upload-zone h2 { margin:6px 0 4px; font-size:14px; letter-spacing:-.2px; }
-    .upload-zone p { font-size:11.5px; line-height:1.45; color:#7b8a83; margin:0 0 14px; }
-    .upload-zone .btn { width:100%; }
-    .small-row { display:flex;justify-content:center;align-items:center;gap:7px;margin-top:11px;color:#86958d;font-size:11px; }
-    .demo-link { border:0; background:none; color:#276f58; padding:2px;font-weight:750;text-decoration:underline;text-underline-offset:3px; }
-    .section-title { display:flex;align-items:center;justify-content:space-between;margin:23px 0 12px;gap:8px; }
-    .section-title h2 { font-size:12.5px; margin:0; letter-spacing:.2px; }
-    .count { border-radius:20px; padding:4px 8px; background:#eff4ec; color:#486454; font-size:11px; font-weight:700; }
-    .list-controls { display:flex;align-items:center;gap:7px;margin:0 0 10px; }
-    .list-controls input { flex:1; width:100%; min-width:0; border:1px solid #e1e7e1;border-radius:10px;padding:10px 11px;background:#fbfcf9;color:var(--ink);font-size:12px; }
-    .track-list { display:flex;flex-direction:column;gap:9px;padding-bottom:4px; }
-    .empty { display:flex;flex-direction:column;align-items:center;gap:8px;background:#fbfcfa;border:1px solid #e9ede9;border-radius:13px;padding:24px 16px;color:#93a29b;text-align:center; font-size:12px; line-height:1.55; }
-    .empty svg { width:27px;height:27px;opacity:.6; }
-    .track { padding:12px 11px; border:1px solid #e5ebe7; background:white;border-radius:12px;transition:box-shadow .2s,border-color .2s; }
-    .track.selected { border-color:#8ec2a4;box-shadow:0 0 0 2px #dff0e3; }
-    .track-top {display:flex;align-items:flex-start;gap:10px;}
-    .vis { height:18px;width:18px; margin:3px 0 0; accent-color:#338462; flex-shrink:0; cursor:pointer; }
-    .color-dot {display:inline-block;height:12px;width:12px; border:2px solid white;box-shadow:0 0 0 1px #aab5b0;border-radius:50%; flex-shrink:0; margin-top:5px;}
-    .track-body {min-width:0;flex:1;}
-    .track-name { background:none;border:0;padding:0; font-weight:770; font-size:12.7px;line-height:1.3;text-align:left;display:block;max-width:100%;overflow-wrap:anywhere;color:#2d4140; }
-    .track-name:hover { text-decoration:underline; }
-    .track-meta {font-size:11px;color:#87958e;margin-top:3px;}
-    .track-metrics { display:flex;gap:12px; flex-wrap:wrap; margin-top:10px; margin-left:28px;color:#657b76;font-size:11px; }
-    .track-metrics b { color:#213c35;font-weight:760; }
-    .track-actions { display:flex;gap:5px; margin:9px 0 0 28px; }
-    .track-actions button { border:0;background:#f4f6f3;padding:6px 8px;font-size:11px;border-radius:7px;color:#61746b; }
-    .track-actions button:hover { background:#e7efe5;color:#214c39; }
-    .disclaimer { border-top:1px solid #edf1ed; padding-top:15px; margin-top:20px; font-size:11px; line-height:1.5;color:#82918b; }
-    .map-wrap { position:relative; min-width:0; min-height:0; overflow:hidden; background:#e3e8e2; }
-    #map { position:absolute;inset:0; }
-    .maplibregl-ctrl-bottom-right {bottom:6px!important;}
-    .maplibregl-ctrl-attrib { font-size:10px!important; }
-    .map-tools { position:absolute;left:21px;right:21px;top:20px;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;gap:9px;pointer-events:none; }
-    .map-tools > * { pointer-events:auto; }
-    .mode-switch {display:flex;gap:3px;padding:4px;background:white;border:1px solid #e5ebe3;box-shadow:var(--shadow);border-radius:12px;}
-    .mode-switch button {border:0;border-radius:8px;padding:10px 14px;font-size:12px; font-weight:760; background:transparent;color:#7c8d85;}
-    .mode-switch button.active {background:#183935;color:white;}
-    .map-actions {display:flex;align-items:center;gap:7px;}
-    .round {display:grid;place-items:center;width:41px;height:41px;border:1px solid #e5ebe3;background:white;border-radius:12px;box-shadow:var(--shadow);color:#35534a;}
-    .round:hover { background:#f4f8ef; } .round.active {background:#153a33;color:#c6fc7c;border-color:#153a33;}
-    .map-hint { position:absolute;bottom:18px;left:20px;z-index:2;border:1px solid #ebefe7;background:#ffffffee;backdrop-filter:blur(8px);color:#6e817a;font-size:11px;border-radius:9px;padding:9px 12px;max-width:280px;box-shadow:0 8px 22px #21453216; }
-    .panel { position:absolute;right:18px;bottom:20px;z-index:3;width:min(435px,calc(100% - 38px)); max-height:min(70vh,560px);display:flex;flex-direction:column; background:#fffffff5;backdrop-filter:blur(12px);border:1px solid #e4ebe4;border-radius:18px;box-shadow:0 16px 56px #1b3c3630;overflow:hidden; }
-    .panel.hide { display:none; }
-    .panel-head {padding:16px 18px 11px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;}
-    .panel-name {font-size:15px;font-weight:800;line-height:1.35;letter-spacing:-.3px;overflow-wrap:anywhere;}
-    .panel-sub {font-size:10px;color:#82958a;margin-top:3px;}
-    .panel-dismiss { background:#f3f6f0;border:0;border-radius:8px; width:28px;height:28px;font-size:20px;line-height:1;color:#74847a; flex-shrink:0; }
-    .panel-main {padding:0 17px 15px;overflow:auto;}
-    .metrics-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:15px; }
-    .metric { padding:11px 9px;background:#f4f7f2;border:1px solid #e9eee7;border-radius:10px; }
-    .metric span {font-size:9.5px;color:#7c9084;display:block;margin-bottom:6px;}
-    .metric strong {font-size:15px;font-weight:810;letter-spacing:-.4px; white-space:nowrap; }
-    .chart-head {display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px;}
-    .chart-head strong {font-size:11px;}
-    .chart-head small {font-size:10px;color:#819084;}
-    #profile {display:block;width:100%;height:118px;border-radius:8px;cursor:crosshair;}
-    .chart-foot {display:flex;justify-content:space-between;gap:12px;font-size:10px;color:#849288;margin:4px 3px 0;}
-    .map-status {position:absolute;top:78px;left:21px;z-index:3;border:1px solid #dbe4de;background:#fffef9;padding:10px 12px;border-radius:10px;font-size:11.5px;color:#536861;box-shadow:0 6px 20px #193d3320;max-width:340px;display:none;}
-    .map-status.show {display:block;}
-    .toast {position:absolute;z-index:15;top:78px;left:50%;transform:translateX(-50%);background:#1b3431;color:white;max-width:min(580px,calc(100vw - 25px));font-size:12px;line-height:1.5;padding:12px 17px;border-radius:12px;box-shadow:0 15px 45px #12271b4a;display:none;}
-    .toast.show {display:block;}
-    .badge-demo {font-size:9px;font-weight:800;color:#9b753c;background:#fff4d9;border-radius:6px;padding:3px 5px;white-space:nowrap;}
-    .comparison-toggle { margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #eef1eb;padding-top:12px; }
-    .comparison-toggle span { font-size:11px;color:#657a6e; }
-    .comparison { margin-top:10px;overflow:auto;max-height:160px; }
-    .comparison table { width:100%;border-collapse:collapse;font-size:10px; }
-    .comparison th,.comparison td {border-bottom:1px solid #eef0ea;padding:7px 5px;text-align:right;white-space:nowrap;}
-    .comparison th:first-child,.comparison td:first-child{text-align:left;max-width:140px;overflow:hidden;text-overflow:ellipsis;}
-    .comparison thead th {color:#809087;position:sticky;top:0;background:#fff;}
-    .copyright {font-size:10px;color:#829087;margin-top:12px;}
-    @media(max-width:850px) { main {grid-template-columns:305px minmax(0,1fr);} .sidebar-scroll {padding:18px 15px;} header{padding:0 15px;} .header-note {display:none;} .panel {width:min(360px,calc(100% - 30px));} }
-    @media(max-width:680px) { html,body {height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto;} .app {height:auto;min-height:100dvh;display:flex;flex-direction:column;} header {height:58px; min-height:58px;position:sticky;top:0;} .brand strong{font-size:16px;} .brand-symbol{width:32px;height:32px;} .header-actions .btn{padding:9px 11px;font-size:11px;} main {display:flex;flex-direction:column;min-height:0;} .map-wrap {order:0;height:52dvh;min-height:350px;flex-shrink:0;} aside {order:1;border-right:0;overflow:visible;} .sidebar-scroll{height:auto;overflow:visible;padding:19px 17px 42px;} .eyebrow,.intro{display:none;} h1{font-size:20px;margin:3px 0 14px;} .upload-zone {padding:12px 10px;} .upload-zone h2{font-size:12px;} .map-tools {left:10px;right:10px;top:10px;} .mode-switch button{padding:9px 11px;} .round{width:39px;height:39px;} .map-hint {left:10px;bottom:10px;max-width:46%;font-size:9px;padding:7px;} .panel {width:calc(100% - 20px);right:10px;bottom:10px;max-height:70%;border-radius:13px;} .panel-head{padding:10px 13px 6px;} .panel-main{padding:0 12px 10px;} .metric{padding:7px;} .metric strong{font-size:13px;} #profile{height:90px;} .map-status {top:62px;left:10px;max-width:95%;} .toast{top:64px;} }
-    @media(max-width:390px) { .brand small{display:none;} .brand{gap:6px;} .brand-symbol{width:29px;height:29px;} .header-actions .btn{padding:8px 9px;} .map-hint{display:none;} }
-
-    /* v0.2: a análise passa a ser o centro; o mapa é contexto */
-    .map-wrap {display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;background:#f5f6f2;}
-    #map {position:relative;inset:auto;flex:0 0 auto;height:38%;min-height:240px;max-height:400px;}
-    .map-tools {top:12px;left:16px;right:16px;}
-    .map-hint{display:none;}
-    .panel {position:relative;right:auto;bottom:auto;width:auto;max-height:none;min-height:0;margin:12px 16px 16px;border-radius:14px;flex:1 0 auto;box-shadow:0 5px 22px #1b3c3615;backdrop-filter:none;}
-    .panel-main{overflow:visible;}
-    #profile{height:145px;}
-    .comparison {max-height:none;}
-    .analysis-section{border-top:1px solid #e7ede6;padding-top:13px;margin-top:15px;}
-    .analysis-grades {display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .grade-tile{border:1px solid #e6e9e2;border-radius:10px;background:#f8faf6;padding:10px;}
-    .grade-tile small{display:block;color:#74857f;font-size:11px;margin-bottom:7px;}
-    .grade-tile strong{font-size:21px;letter-spacing:-.5px;}
-    .grade-tile.up strong{color:#a35c17;} .grade-tile.down strong{color:#2a77ac;}
-    .analysis-location{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;color:#6d8077;font-size:11px;}
-    .grade-distribution{margin:7px 0 3px;}
-    .grade-bar{display:flex;width:100%;height:13px;border-radius:5px;overflow:hidden;background:#eef2ee;}
-    .grade-legend{display:flex;flex-wrap:wrap;gap:7px 15px;margin-top:9px;font-size:10.5px;color:#667971;}
-    .grade-swatch{display:inline-block;width:10px;height:10px;vertical-align:middle;border-radius:2px;margin-right:4px;}
-    .grade-note{font-size:10.5px;line-height:1.5;color:#8a9690;margin-bottom:0;}
-    #slope-window{background:#fff;border:1px solid #dce5de;color:#294b40;padding:5px 7px;border-radius:7px;}
-    .comparison-toggle{margin-top:17px;}
-    @media(max-width:680px){.map-wrap{order:1;height:auto;min-height:0;overflow:visible;display:flex;flex-direction:column;}#map{height:235px;min-height:235px;max-height:none;flex-shrink:0;}aside{order:0}.panel{width:auto;max-height:none;right:auto;bottom:auto;margin:12px 10px 20px;flex:0 0 auto;} .panel-main{overflow:visible;} #profile{height:132px;} .map-tools{top:10px;left:10px;right:10px;} }
-
-  </style>
-</head>
-<body>
-<div class="app">
-  <header>
-    <div class="brand" aria-label="Desconfinar">
-      <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M3 25 12 10l5 9 5-12 8 18H3Z" stroke="#143a2e" stroke-width="2.5" stroke-linejoin="round"/><path d="m9 25 7-8 4 4 3-4" stroke="#143a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <span><strong>desconfinar<span style="color:#c6fc7c">.</span></strong><small>Importar · Analisar · Comparar</small></span>
-    </div>
-    <div class="header-actions">
-      <span class="header-note">Análise de percursos pedestres</span>
-      <button class="btn btn-primary" id="top-upload">+ Importar GPX / KML</button>
-    </div>
-  </header>
-  <main>
-    <aside>
-      <div class="sidebar-scroll">
-        <div class="eyebrow">Versão experimental · 0.2</div>
-        <h1>Caminhadas.<br>Dados que interessam.</h1>
-        <p class="intro">Analisa e compara GPX/KML de caminhadas: inclinações, troços exigentes, desníveis e ritmo. O mapa é apenas um apoio.</p>
-        <div class="upload-zone" id="dropzone" tabindex="0" aria-label="Zona de importação de GPX e KML">
-          <div class="upload-icon"><svg class="icon" style="width:21px;height:21px" viewBox="0 0 24 24"><path d="M12 17V3m0 0-5 5m5-5 5 5M5 17v3h14v-3"/></svg></div>
-          <h2>Arrasta os teus percursos para aqui</h2>
-          <p>Ficheiros .gpx e .kml · vários de uma vez · análise local</p>
-          <button class="btn btn-primary" id="choose-files">Escolher ficheiros</button>
-          <div class="small-row">Ou <button class="demo-link" id="demo-btn">experimentar 3 percursos fictícios</button></div>
-        </div>
-        <div class="section-title"><h2>Percursos carregados</h2><span class="count" id="route-count">0 trilhos</span></div>
-        <div class="list-controls">
-          <input id="search" type="search" aria-label="Filtrar percursos por nome" placeholder="Filtrar por nome…" autocomplete="off">
-          <button class="btn-icon" id="fit-all-list" title="Enquadrar todos os percursos" aria-label="Enquadrar todos os percursos"><svg class="icon" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
-          <button class="btn-icon" id="clear-all" title="Remover todos os percursos" aria-label="Remover todos os percursos"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6m4-6v6"/></svg></button>
-        </div>
-        <div class="track-list" id="track-list"><div class="empty" id="empty-list"><svg class="icon" viewBox="0 0 24 24"><path d="M3 17 9 6l4 7 3-5 5 9M3 20h18"/></svg>Os percursos aparecem aqui.<br>Carrega GPX/KML ou experimenta a demonstração.</div></div>
-        <p class="disclaimer"><b>Privacidade:</b> os GPX/KML carregados são processados no teu navegador e não são enviados para um servidor. Os mapas e o relevo dependem de serviços externos. Base comunitária apenas para caminhadas: funcionalidade futura.</p>
-      </div>
-    </aside>
-    <section class="map-wrap" aria-label="Mapa interativo de percursos">
-      <div id="map"></div>
-      <div class="map-tools">
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#14362e"><meta name="description" content="Desconfinar: comparador de percursos pedestres GPX/KML, inclinações, desníveis e perfis altimétricos."><title>Desconfinar — Comparar caminhadas GPX/KML</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.css"><style>
+:root{--bg:#f5f7f5;--card:#fff;--ink:#18322b;--muted:#6c8179;--line:#e1e9e3;--deep:#14362e;--lime:#d5f5a5;--shadow:0 3px 22px rgba(16,47,37,.045);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);min-height:100vh}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #6ca9cf;outline-offset:2px}
+button{transition:background .13s ease,border-color .13s ease}header.site-head{background:var(--deep);color:#fff;min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:12px max(24px,calc((100vw - 1400px)/2));gap:20px;position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:13px}.logo-mark{width:39px;height:39px;border-radius:12px;background:var(--lime);display:grid;place-items:center;color:var(--deep);font-size:23px;font-weight:900}.logo strong{display:block;font-size:19px;line-height:1.08;letter-spacing:-.65px}.logo small{font-size:10px;color:#bcd7ca;letter-spacing:.45px}
+.button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:720;padding:11px 15px;font-size:13px}.button:hover{background:#f0f5f0}.button.dark{background:var(--lime);border-color:var(--lime);color:var(--deep)}.button.dark:hover{background:#e5fac7}.button.tiny{padding:7px 10px;font-size:11px}.button.quiet{color:var(--muted);background:transparent}
+.hero{max-width:1440px;margin:auto;padding:33px 24px 27px;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:32px;align-items:center}.eyebrow{color:#4a8062;letter-spacing:1.5px;font-size:10px;text-transform:uppercase;font-weight:800}.hero h1{font-size:clamp(27px,3vw,42px);letter-spacing:-1.55px;line-height:1.1;margin:10px 0 13px;font-weight:830}.hero p{color:var(--muted);max-width:620px;font-size:14px;line-height:1.7;margin:0}.hero-emph{color:var(--ink);font-weight:720}
+.upload-zone{background:#eaf3e9;border:1.5px dashed #9fbeac;border-radius:16px;padding:18px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}.upload-zone.drag{background:#daf2d7;border-color:#2b8b5a}.upload-zone .upload-copy{flex:1;min-width:160px}.upload-zone strong{display:block;font-size:13px;margin-bottom:4px}.upload-zone small{display:block;color:#678472;font-size:11px;line-height:1.4}.upload-zone .button{background:var(--deep);color:#fff;border-color:var(--deep)}.demo-link{border:0;background:transparent;color:#2e7754;text-decoration:underline;text-underline-offset:3px;font-size:11px;font-weight:720;padding:3px 0}
+.workspace{max-width:1440px;padding:0 24px 70px;margin:auto;display:grid;grid-template-columns:300px minmax(0,1fr);align-items:start;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.sidebar{padding:18px 15px 20px;position:sticky;top:89px;max-height:calc(100vh - 105px);overflow:auto}.sidebar-title{display:flex;align-items:center;justify-content:space-between;gap:10px}.sidebar-title h2{font-size:15px;margin:0;letter-spacing:-.35px}.count{font-size:11px;font-weight:800;background:#e9f1e8;border-radius:20px;padding:5px 9px;color:#456750}.sidebar-help{font-size:11.5px;color:var(--muted);line-height:1.55;margin:11px 0 16px}
+.search-tools{display:flex;gap:8px;margin-bottom:13px}.search-tools input{width:100%;min-width:0;padding:10px 11px;border:1px solid var(--line);background:#fafcfa;border-radius:9px;font-size:12px}.track-list{display:grid;gap:9px}.empty-list{padding:21px 12px;text-align:center;color:#799086;background:#f9fbf8;border:1px dashed var(--line);border-radius:12px;font-size:12px;line-height:1.6}
+.track{border:1px solid var(--line);border-radius:12px;padding:12px 11px;background:#fff}.track.selected{border-color:#6a9c82;box-shadow:0 0 0 2px #e9f7e8}.track-top{display:flex;gap:9px;align-items:flex-start}.vis{accent-color:#267451;width:18px;height:18px;margin:3px 0 0;flex-shrink:0}.track-name{background:transparent;border:0;color:#23453a;font-size:12px;font-weight:780;line-height:1.3;overflow-wrap:anywhere;text-align:left;padding:0}.track-name:hover{text-decoration:underline}.color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:5px}.track-body{min-width:0;flex:1}.track-meta{color:#8b9c91;font-size:10px;margin-top:5px;overflow-wrap:anywhere}.track-metrics{display:flex;flex-wrap:wrap;gap:7px 13px;font-size:11px;color:#718278;margin:9px 0 0 28px}.track-metrics b{color:var(--ink)}.track-actions{display:flex;gap:7px;margin:10px 0 0 28px}.track-actions button{background:#f2f5f1;border:1px solid transparent;border-radius:7px;color:#4b695c;font-size:11px;padding:6px 8px}.track-actions button:hover{border-color:#cde2d0}.pill-demo{font-size:9px;font-weight:800;color:#8e7036;background:#fff4d9;padding:3px 6px;border-radius:5px;display:inline-block;margin-top:5px}.sidebar-footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--line);font-size:10.5px;line-height:1.55;color:#8a9c91}
+.main-col{display:grid;gap:16px;min-width:0}.section-header{padding:21px 23px 17px;border-bottom:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.section-header h2{font-size:19px;letter-spacing:-.6px;margin:0 0 5px}.section-header p{color:var(--muted);margin:0;font-size:12px;line-height:1.5}.section-index{font-size:10px;letter-spacing:1.2px;font-weight:800;color:#58936c;text-transform:uppercase;display:block;margin-bottom:5px}.comparison-badge{padding:6px 10px;background:#edf5e9;color:#366c50;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
+.comparison{padding:0 0 6px}.compare-scroll{width:100%;overflow-x:auto}.compare-table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;min-width:650px}.compare-table th,.compare-table td{text-align:left;padding:12px 12px;border-bottom:1px solid #edf1ec;vertical-align:middle;font-size:12px}.compare-table th:first-child,.compare-table td:first-child{position:sticky;left:0;background:#fff;z-index:1;width:190px;color:#637a70;font-weight:690;box-shadow:1px 0 0 #edf1ec}.compare-table thead th{background:#f9fbf8;vertical-align:top}.compare-table thead th:first-child{background:#f9fbf8;z-index:2}.compare-table tbody tr:last-child td{border-bottom:none}.compare-table td:not(:first-child){font-weight:780;color:#24473a;white-space:nowrap;font-variant-numeric:tabular-nums}.column-name{display:flex;align-items:flex-start;gap:8px;min-width:110px}.column-name button{border:0;background:none;text-align:left;padding:0;font-size:12px;font-weight:800;color:#234c3b;overflow-wrap:anywhere;line-height:1.3}.column-name button:hover{text-decoration:underline}.col-meta{font-size:10px;font-weight:500;color:#99a59b;margin-top:5px}.comparison-note{font-size:10px;line-height:1.6;color:#87978d;margin:0;padding:9px 22px 16px}
+.welcome{padding:37px 24px;text-align:center;color:#7d8e84;font-size:13px;line-height:1.6}.welcome strong{display:block;font-size:17px;color:#315848;margin-bottom:9px}
+.profile-card .inner{padding:18px 23px 16px}.mini-title{font-size:14px;letter-spacing:-.2px;font-weight:800;margin:0}.muted{font-size:11px;color:var(--muted)}.legend{display:flex;gap:10px 16px;flex-wrap:wrap;margin:12px 0 0;font-size:11px;color:#506b5c}.legend-item{display:flex;align-items:center;gap:6px}.legend-line{width:19px;height:3px;border-radius:3px}#overlay-profile{width:100%;height:230px;display:block;margin-top:12px;cursor:crosshair}#overlay-caption{min-height:19px;font-size:11px;color:#5a7668;margin:5px 0 0}.empty-profile{padding:25px;text-align:center;color:#91a097}
+.map-card{overflow:hidden}.map-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:15px 22px}.map-head span{display:block;font-size:11px;color:var(--muted);margin-top:3px}#map-surface[hidden]{display:none!important}#map-surface{position:relative;border-top:1px solid var(--line)}#map{height:360px;width:100%;background:#e2eae5}.map-tools{position:absolute;top:12px;left:12px;right:12px;display:flex;align-items:flex-start;justify-content:space-between;z-index:4;pointer-events:none}.map-tools>*{pointer-events:auto}.mode-switch,.map-actions{display:flex;gap:4px}.mode-switch{background:#fff;padding:4px;border-radius:10px;box-shadow:0 3px 15px #17352419}.mode-switch button,.map-actions button{border:0;border-radius:7px;background:#fff;padding:8px 10px;font-size:11px;font-weight:750;color:#567465}.mode-switch button.active,.map-actions button.active{background:var(--deep);color:#fff}.map-actions button{box-shadow:0 3px 15px #17352419}.map-status{display:none;position:absolute;top:65px;left:12px;background:#fff;padding:11px;border-radius:8px;z-index:4;font-size:11px;max-width:280px}.map-status.show{display:block}.map-hint{display:none}
+.analysis-card{padding:20px 22px 24px}.analysis-card.hide{display:none}.panel-head{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.panel-name{font-weight:830;font-size:17px;overflow-wrap:anywhere}.panel-sub{font-size:11px;color:var(--muted);margin-top:4px}.panel-dismiss{border:1px solid var(--line);border-radius:8px;background:#fff;width:31px;height:31px;font-size:20px;color:#67796d}.panel-main{padding-top:17px}.metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:20px}.metric{border:1px solid var(--line);border-radius:10px;background:#f8fbf8;padding:12px}.metric span{display:block;font-size:10px;color:#718678;margin-bottom:5px}.metric strong{font-size:16px;white-space:nowrap}.chart-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:13px 0 7px}.chart-head strong{font-size:12px}.chart-head small{font-size:10px;color:var(--muted)}#profile{display:block;width:100%;height:150px}.chart-foot{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.analysis-section{border-top:1px solid var(--line);margin-top:17px;padding-top:10px}.analysis-grades{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.grade-tile{border:1px solid var(--line);background:#f8faf6;border-radius:10px;padding:12px}.grade-tile small{display:block;font-size:11px;color:var(--muted);margin-bottom:7px}.grade-tile strong{font-size:20px}.grade-tile.up strong{color:#a56e29}.grade-tile.down strong{color:#247ab1}.analysis-location{display:flex;flex-wrap:wrap;gap:12px;color:#789086;font-size:11px;margin-top:11px}.grade-distribution{margin:8px 0}.grade-bar{display:flex;overflow:hidden;height:13px;border-radius:6px}.grade-legend{display:flex;gap:8px 14px;flex-wrap:wrap;margin-top:10px;font-size:10px;color:#5b7467}.grade-swatch{height:10px;width:10px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:4px}.grade-note{font-size:11px;color:#7b9084;line-height:1.65}.copyright{font-size:10px;color:#8a9a90;margin-top:14px;line-height:1.5}#slope-window{padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);padding:12px 16px;background:#183e30;color:#fff;border-radius:12px;box-shadow:0 12px 40px #0b2a2060;z-index:50;display:none;font-size:12px;max-width:min(600px,calc(100vw - 30px));line-height:1.5}.toast.show{display:block}
+@media(max-width:1000px){.hero{grid-template-columns:1fr 340px;gap:18px}.workspace{grid-template-columns:270px minmax(0,1fr)}.compare-table th:first-child,.compare-table td:first-child{width:160px}.metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){header.site-head{padding:11px 15px;min-height:62px}.logo strong{font-size:17px}.logo small{font-size:9px}.hero{display:block;padding:25px 15px 18px}.hero h1{font-size:30px}.upload-zone{margin-top:21px;padding:15px}.workspace{display:flex;flex-direction:column;padding:0 12px 45px;gap:12px}.sidebar{width:100%;position:static;max-height:none;padding:15px}.main-col{width:100%;gap:12px}.section-header{padding:18px 17px 14px}.section-header h2{font-size:17px}.compare-table th:first-child,.compare-table td:first-child{width:148px}.compare-table{min-width:610px}.compare-table th,.compare-table td{padding:10px 9px;font-size:11px}.profile-card .inner{padding:16px}#overlay-profile{height:190px}.map-head{padding:12px 15px}.analysis-card{padding:16px}.metrics-grid{grid-template-columns:repeat(2,1fr)}.track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.logo-mark{width:32px;height:32px;font-size:20px}.header-upload{font-size:11px;padding:9px 10px}.track-list{grid-template-columns:1fr}.track{padding:11px}.upload-zone .button{width:100%}.hero h1{font-size:29px}.analysis-grades{grid-template-columns:1fr 1fr}.grade-tile strong{font-size:17px}}
+</style></head><body>
+<header class="site-head">
+  <div class="logo"><div class="logo-mark" aria-hidden="true">⌁</div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
+  <button id="top-upload" class="button dark header-upload">+ Importar GPX / KML</button>
+</header>
+<section class="hero" aria-labelledby="hero-title">
+  <div><div class="eyebrow">O teu comparador de percursos · versão 0.3</div><h1 id="hero-title">Os trilhos, lado a lado.</h1><p>Carrega vários GPX ou KML, <span class="hero-emph">escolhe até quatro caminhadas</span> e compara distância, desnível, inclinação e perfis altimétricos no mesmo ecrã. O mapa é opcional.</p></div>
+  <div class="upload-zone" id="dropzone" tabindex="0" aria-label="Arrastar ou selecionar ficheiros GPX e KML">
+    <div class="upload-copy"><strong>Junta os teus percursos</strong><small>Arrasta ficheiros .gpx / .kml para aqui<br>ou usa o botão</small></div>
+    <button class="button" id="choose-files">Escolher ficheiros</button>
+    <div style="width:100%;display:flex;justify-content:flex-end"><button class="demo-link" id="demo-btn">Experimentar com 3 exemplos fictícios</button></div>
+  </div>
+</section>
+<div class="workspace">
+  <aside class="card sidebar" aria-label="Percursos disponíveis">
+    <div class="sidebar-title"><h2>Percursos</h2><span class="count" id="route-count">0 trilhos</span></div>
+    <p class="sidebar-help">Assinala as caixas dos trilhos que queres <b>comparar</b>. Máximo de quatro de cada vez. Clica no nome para ver os detalhes.</p>
+    <div class="search-tools"><input id="search" type="search" placeholder="Procurar pelo nome…" aria-label="Filtrar trilhos" autocomplete="off"><button class="button tiny quiet" id="clear-all" title="Remover ficheiros da sessão">Limpar</button></div>
+    <div id="track-list" class="track-list"></div>
+    <div class="sidebar-footer">Apenas percursos pedestres. Os ficheiros ficam no teu navegador, não são publicados. Os dados de desnível e inclinação dependem da qualidade do GPS.</div>
+  </aside>
+  <main class="main-col">
+    <section class="card" aria-labelledby="compare-title">
+      <div class="section-header"><div><span class="section-index">01 · COMPARAR</span><h2 id="compare-title">Comparação direta</h2><p>Uma coluna por percurso. Podes ativar ou desativar caminhadas na lista à esquerda.</p></div><span class="comparison-badge" id="compare-count">0 / 4</span></div>
+      <div class="comparison" id="comparison"></div>
+      <p class="comparison-note">Comparação de traçados, não uma classificação automática de dificuldade. D+ e inclinações são aproximados; velocidades exigem registos de tempo.</p>
+    </section>
+    <section class="card profile-card" aria-labelledby="overlay-title">
+      <div class="section-header"><div><span class="section-index">02 · VER AS DIFERENÇAS</span><h2 id="overlay-title">Perfis altimétricos sobrepostos</h2><p>Todos na mesma escala de distância e altitude, para perceberes onde se distinguem.</p></div></div>
+      <div class="inner"><div class="legend" id="overlay-legend"></div><canvas id="overlay-profile" role="img" aria-label="Comparação dos perfis de altitude"></canvas><div id="overlay-caption" aria-live="polite">Seleciona percursos com altitude para comparar os perfis.</div></div>
+    </section>
+    <section class="card map-card" aria-labelledby="map-title">
+      <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa dos percursos</strong><span>Apenas se quiseres ver os traçados sobrepostos no terreno.</span></div><button class="button tiny" id="map-toggle" aria-expanded="false">Abrir mapa</button></div>
+      <div id="map-surface" hidden><div id="map"></div><div class="map-tools">
         <div class="mode-switch" role="group" aria-label="Modo do mapa"><button id="mode-2d" class="active" aria-pressed="true">Mapa 2D</button><button id="mode-3d" aria-pressed="false">Relevo 3D</button></div>
-        <div class="map-actions"><button class="round" id="satellite-mode" aria-label="Alternar imagens de satélite" title="Ativar/desativar satélite"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.7"/><path d="m21 15-5-5L5 21"/></svg></button><button class="round" id="fit-all-map" aria-label="Ver todos os percursos" title="Ver todos os percursos"><svg class="icon" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button><button class="round" id="reset-view" aria-label="Voltar à Serra da Freita" title="Voltar à Serra da Freita"><svg class="icon" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10h-6v-7H9v7H3V11Z"/></svg></button></div>
+        <div class="map-actions"><button id="satellite-mode" title="Vista satélite" aria-label="Vista satélite">Satélite</button><button id="fit-all-map" title="Enquadrar percursos" aria-label="Enquadrar percursos">Ver todos</button><button id="reset-view" title="Centrar na Freita">Freita</button></div>
+      </div><div class="map-status" id="map-status" role="status"></div></div>
+    </section>
+    <section class="card analysis-card hide" id="details" aria-labelledby="detail-name">
+      <div class="panel-head"><div><span class="section-index">03 · UM PERCURSO EM DETALHE</span><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div>
+      <div class="panel-main">
+        <div class="metrics-grid" id="detail-metrics"></div>
+        <div class="chart-head"><strong>Perfil individual</strong><small id="chart-label">Passa o rato no gráfico</small></div><canvas id="profile" role="img" aria-label="Perfil altimétrico individual"></canvas>
+        <div class="chart-foot"><span id="chart-min">—</span><span id="chart-max">—</span></div>
+        <div class="analysis-section"><div class="chart-head"><strong>Inclinação sustentada</strong><label style="font-size:11px" for="slope-window">Troço <select id="slope-window"><option value="100">100 m</option><option value="200" selected>200 m</option><option value="500">500 m</option></select></label></div><div class="analysis-grades" id="analysis-grades"></div><div class="analysis-location" id="analysis-location"></div><div class="chart-head" style="margin-top:14px"><strong>Distribuição dos declives</strong><small>Troços por classe</small></div><div id="grade-distribution" class="grade-distribution"></div><p class="grade-note">Altitudes suavizadas e declives calculados em janelas definidas. Resultados sujeitos a ruído e lacunas do GPX.</p></div>
+        <p class="copyright">Só caminhadas. A inclinação não revela, por si só, piso, exposição, vegetação ou dificuldade técnica.</p>
       </div>
-      <div class="map-status" id="map-status" role="status"></div>
-      <div class="map-hint" id="map-hint">Importa GPX/KML para consultar a análise detalhada.</div>
-      <section class="panel hide" id="details" aria-label="Análise do percurso">
-        <div class="panel-head"><div><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div>
-        <div class="panel-main">
-          <div class="metrics-grid" id="detail-metrics"></div>
-          <div class="chart-head"><strong>Perfil altimétrico</strong><small id="chart-label">Passa o rato no gráfico</small></div>
-          <canvas id="profile" aria-label="Perfil de altitude por distância" role="img"></canvas>
-          <div class="chart-foot"><span id="chart-min">—</span><span id="chart-max">—</span></div>
-          <div class="analysis-section">
-            <div class="chart-head"><strong>Inclinação sustentada</strong><label for="slope-window" style="font-size:11px">Troço <select id="slope-window" aria-label="Distância de análise da inclinação"><option value="100">100 m</option><option value="200" selected>200 m</option><option value="500">500 m</option></select></label></div>
-            <div class="analysis-grades" id="analysis-grades"></div>
-            <div class="analysis-location" id="analysis-location"></div>
-            <div class="chart-head" style="margin-top:12px"><strong>Distribuição de inclinações</strong><small>Estimativa a cada 25 m</small></div>
-            <div id="grade-distribution" class="grade-distribution"></div>
-            <p class="grade-note">A inclinação é calculada a partir de altitudes suavizadas; as médias referem-se a troços com inclinação superior a 3% em valor absoluto. Os resultados variam conforme a qualidade do ficheiro.</p>
-          </div>
-          <div class="comparison-toggle"><span>Comparar percursos carregados</span><button class="btn btn-ghost btn-mini" id="toggle-comparison">Ocultar tabela</button></div>
-          <div class="comparison" id="comparison"></div>
-          <p class="copyright">Análise exclusivamente de caminhadas. A inclinação não mede exposição, tipo de piso ou dificuldade técnica. D+ e D− são aproximados. Os exemplos fictícios não servem para navegação.</p>
-        </div>
-      </section>
-      <div class="toast" id="toast" role="alert" aria-live="polite"></div>
-      <input type="file" id="file-input" multiple accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml" hidden>
     </section>
   </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script>
-<script>
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+<input type="file" id="file-input" multiple accept=".gpx,.kml,application/gpx+xml,application/vnd.google-earth.kml+xml" hidden>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@6.16.0/dist/maplibre-gl.js"></script><script>
 'use strict';
 const $=id=>document.getElementById(id);
 const palette=['#f16b4c','#2d8ecf','#20a573','#ad6bdd','#ec9f35','#6c78e4','#d75494','#688847','#007e86','#c66d30'];
@@ -349,25 +206,53 @@ function getBounds(rs){let minLon=Infinity,minLat=Infinity,maxLon=-Infinity,maxL
 function zoomTo(rs){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}const bounds=getBounds(rs);if(!bounds){toast('Não existem percursos visíveis.');return;}const pad=window.innerWidth<681?45:65;map.fitBounds(bounds,{padding:{top:Math.max(80,pad),right:pad,bottom:pad,left:pad},maxZoom:15.3,duration:700,pitch:is3D?55:0});}
 function routeCountText(n){return n===1?'1 trilho':n+' trilhos';}
 function el(tag,cls,text){const a=document.createElement(tag);if(cls)a.className=cls;if(text!==undefined)a.textContent=text;return a;}
-function renderList(){const list=$('track-list');list.replaceChildren();const filter=$('search').value.trim().toLocaleLowerCase('pt-PT');$('route-count').textContent=routeCountText(routes.length);
- const filtered=routes.filter(r=>r.name.toLocaleLowerCase('pt-PT').includes(filter)||r.sourceName.toLocaleLowerCase('pt-PT').includes(filter));if(!filtered.length){list.append(el('div','empty',routes.length?'Nenhum percurso corresponde à pesquisa.':'Os percursos aparecem aqui. Carrega GPX/KML de caminhadas ou experimenta a demonstração.'));return;}
- for(const r of filtered){const item=el('article','track'+(selectedId===r.id?' selected':''));const top=el('div','track-top');const vis=el('input','vis');vis.type='checkbox';vis.checked=r.visible;vis.setAttribute('aria-label','Mostrar '+r.name);vis.addEventListener('change',()=>{r.visible=vis.checked;refreshMapStyles();renderList();renderComparison();});const dot=el('span','color-dot');dot.style.backgroundColor=r.color;const body=el('div','track-body');const name=el('button','track-name',r.name);name.title='Selecionar e analisar';name.onclick=()=>selectRoute(r.id);body.append(name);const meta=el('div','track-meta',r.demo?'Demonstração · percurso fictício':r.format+' · '+r.sourceName);body.append(meta);if(r.demo)body.append(el('span','badge-demo','NÃO USAR PARA CAMINHAR'));
- top.append(vis,dot,body);item.append(top);
- const metrics=el('div','track-metrics');for(const [lab,val] of [['Dist.',fmtKm(r.stats.distance)],['D+',r.stats.hasElevation?fmtM(r.stats.ascent):'—'],['D−',r.stats.hasElevation?fmtM(r.stats.descent):'—']]){const span=el('span');const b=el('b',null,val);span.append(document.createTextNode(lab+' '),b);metrics.append(span);}item.append(metrics);
- const actions=el('div','track-actions');const zoom=el('button',null,'Enquadrar');zoom.onclick=()=>zoomTo([r]);const remove=el('button',null,'Remover');remove.onclick=()=>removeRoute(r.id);actions.append(zoom,remove);item.append(actions);list.append(item);
- }
+
+let mapOpen=false,overlayHover=null;
+function pct(n){return n==null||!Number.isFinite(n)?'—':n.toLocaleString('pt-PT',{maximumFractionDigits:1,minimumFractionDigits:1})+' %';}
+function renderList(){
+  const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
+  const q=$('search').value.trim().toLocaleLowerCase('pt-PT');
+  const filtered=routes.filter(r=>r.name.toLocaleLowerCase('pt-PT').includes(q)||r.sourceName.toLocaleLowerCase('pt-PT').includes(q));
+  if(!filtered.length){list.append(el('div','empty-list',routes.length?'Sem correspondências.':'Ainda não tens trilhos carregados. Importa GPX/KML ou experimenta os exemplos.'));return;}
+  for(const r of filtered){
+    const item=el('article','track'+(selectedId===r.id?' selected':''));
+    const top=el('div','track-top');
+    const checkbox=el('input','vis');checkbox.type='checkbox';checkbox.checked=r.visible;checkbox.setAttribute('aria-label','Comparar '+r.name);
+    checkbox.title='Incluir na comparação';
+    checkbox.onchange=()=>{if(checkbox.checked&&routes.filter(x=>x.visible).length>=4){checkbox.checked=false;toast('Podes comparar até quatro percursos. Desmarca um antes de adicionar outro.');return;}r.visible=checkbox.checked;refreshMapStyles();renderList();renderComparison();};
+    const dot=el('span','color-dot');dot.style.backgroundColor=r.color;
+    const body=el('div','track-body');
+    const name=el('button','track-name',r.name);name.title='Ver análise individual';name.onclick=()=>selectRoute(r.id);
+    body.append(name,el('div','track-meta',r.demo?'Exemplo fictício':r.format+' · '+r.sourceName));
+    if(r.demo)body.append(el('span','pill-demo','DEMONSTRAÇÃO'));
+    top.append(checkbox,dot,body);item.append(top);
+    const metrics=el('div','track-metrics');for(const [label,value] of [['Dist.',fmtKm(r.stats.distance)],['D+',r.stats.hasElevation?fmtM(r.stats.ascent):'—']]){const m=el('span');m.append(document.createTextNode(label+' '),el('b',null,value));metrics.append(m);}item.append(metrics);
+    const actions=el('div','track-actions');const details=el('button',null,'Analisar');details.onclick=()=>selectRoute(r.id);
+    const showMap=el('button',null,'Ver no mapa');showMap.onclick=()=>{if(!r.visible){if(routes.filter(x=>x.visible).length>=4){toast('Desmarca um percurso para veres este em conjunto.');return;}r.visible=true;renderList();renderComparison();}openMap(()=>zoomTo([r]));};
+    const remove=el('button',null,'Remover');remove.onclick=()=>removeRoute(r.id);
+    actions.append(details,showMap,remove);item.append(actions);list.append(item);
+  }
 }
-function selectRoute(id){selectedId=id;const r=routes.find(r=>r.id===id);if(!r){$('details').classList.add('hide');renderList();refreshMapStyles();return;}$('details').classList.remove('hide');$('detail-name').textContent=r.name;$('detail-name').style.color=r.color;$('detail-origin').textContent=r.demo?'Demonstração fictícia':r.format+' · '+r.sourceName;
- const grid=$('detail-metrics');grid.replaceChildren();const stats=r.stats;for(const [label,value] of [['Distância',fmtKm(stats.distance)],['Subida D+',stats.hasElevation?fmtM(stats.ascent):'—'],['Descida D−',stats.hasElevation?fmtM(stats.descent):'—'],['Altitude mínima',fmtM(stats.minEle)],['Altitude máxima',fmtM(stats.maxEle)],['Tempo total',fmtTime(stats.duration)],['Tempo em movimento',fmtTime(r.motion.movingMs)],['Velocidade em movimento',r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1})+' km/h':'—'],['Altitude máx. − mín.',stats.hasElevation?fmtM(stats.maxEle-stats.minEle):'—']]){const box=el('div','metric');box.append(el('span',null,label),el('strong',null,value));grid.append(box);}
- renderList();refreshMapStyles();renderProfile(r);renderAdvanced(r);renderComparison();if(r.motion.possibleNonWalking)toast("Atenção: o GPX apresenta velocidades pouco compatíveis com uma caminhada; confirma o ficheiro.");}
-function removeRoute(id){const ix=routes.findIndex(r=>r.id===id);if(ix<0)return;removeMapRoute(id);routes.splice(ix,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}if(!routes.length)$('map-hint').textContent='Importa GPX/KML para consultar a análise detalhada.';renderList();refreshMapStyles();renderComparison();}
-function clearAll(){for(const r of [...routes])removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');$('map-hint').textContent='Importa GPX/KML para consultar a análise detalhada.';renderList();refreshMapStyles();}
-async function importFiles(files){const accepted=Array.from(files).filter(f=>/\.(gpx|kml)$/i.test(f.name));if(!accepted.length){toast('Seleciona ficheiros .gpx ou .kml.');return;}let success=0;let errors=[];for(const f of accepted){try{if(f.size>20*1024*1024)throw new Error('ficheiro acima de 20 MB');const parsed=parseText(await f.text(),f.name);addRoute(parsed,f.name);success++;}catch(e){errors.push(f.name+': '+e.message);}}
- renderList();refreshMapStyles();if(success){zoomTo(routes.filter(r=>r.visible));selectRoute(routes[routes.length-1].id);$('map-hint').textContent=routeCountText(routes.length)+' carregados · seleciona uma linha para analisar.';}
- toast((success?routeCountText(success)+' importados. ':'')+(errors.length?errors.length+' falharam. '+errors.slice(0,2).join(' | '):''));}
+function selectRoute(id){
+  const r=routes.find(x=>x.id===id);if(!r)return;selectedId=id;
+  $('details').classList.remove('hide');$('detail-name').textContent=r.name;$('detail-name').style.color=r.color;
+  $('detail-origin').textContent=r.demo?'Exemplo fictício para testar a comparação':r.format+' · '+r.sourceName;
+  const grid=$('detail-metrics');grid.replaceChildren();const st=r.stats;
+  for(const [label,value] of [['Distância',fmtKm(st.distance)],['Desnível D+',st.hasElevation?fmtM(st.ascent):'—'],['Desnível D−',st.hasElevation?fmtM(st.descent):'—'],['Altitude mínima',fmtM(st.minEle)],['Altitude máxima',fmtM(st.maxEle)],['Tempo total',fmtTime(st.duration)],['Tempo em movimento',fmtTime(r.motion.movingMs)],['Velocidade em movimento',r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1})+' km/h':'—'],['Subida por km',st.hasElevation&&st.distance>0?Math.round(st.ascent/(st.distance/1000))+' m/km':'—']]){const cell=el('div','metric');cell.append(el('span',null,label),el('strong',null,value));grid.append(cell);}
+  renderAdvanced(r);renderList();refreshMapStyles();
+  requestAnimationFrame(()=>{renderProfile(r);$('details').scrollIntoView({behavior:'smooth',block:'start'});});
+  if(r.motion.possibleNonWalking)toast('O ficheiro tem velocidades pouco compatíveis com caminhadas. Confirma o percurso.');
+}
+function removeRoute(id){const at=routes.findIndex(r=>r.id===id);if(at<0)return;removeMapRoute(id);routes.splice(at,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}renderList();refreshMapStyles();renderComparison();}
+function clearAll(){for(const r of routes)removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');overlayHover=null;renderList();refreshMapStyles();renderComparison();}
+async function importFiles(files){const accepted=Array.from(files).filter(f=>/\.(gpx|kml)$/i.test(f.name));if(!accepted.length){toast('Seleciona ficheiros .gpx ou .kml.');return;}
+ let n=0,err=[];for(const f of accepted){try{if(f.size>20*1024*1024)throw Error('ficheiro maior que 20 MB');const parsed=parseText(await f.text(),f.name);const prior=routes.filter(r=>r.visible).length;const r=addRoute(parsed,f.name);r.visible=prior<4;n++;}catch(e){err.push(f.name+': '+e.message);}}
+ renderList();refreshMapStyles();renderComparison();
+ toast((n?n+' percurso(s) importado(s). ':'')+(err.length?err.length+' não importado(s): '+err.slice(0,2).join(' | '):''));if(mapOpen&&mapReady&&n)zoomTo(routes.filter(r=>r.visible));
+}
 function loadDemo(){const starts=[[-8.266,40.872],[-8.266,40.872],[-8.266,40.872]], configs=[{name:'Circuito curto · demonstração',count:130,shift:.010,phase:.3,gain:240},{name:'Travessia panorâmica · demonstração',count:175,shift:.024,phase:1.1,gain:490},{name:'Variante da cumeada · demonstração',count:150,shift:.017,phase:2.1,gain:390}];let added=[];
  for(let j=0;j<configs.length;j++){const c=configs[j],seg=[];for(let i=0;i<=c.count;i++){const t=i/c.count,angle=2*Math.PI*t,lon=starts[j][0]+.026*Math.sin(angle)+c.shift*Math.sin(Math.PI*t)*Math.cos(2*angle),lat=starts[j][1]+.018*Math.cos(angle)+c.shift*.68*Math.sin(3*angle)*Math.sin(Math.PI*t),ele=670+c.gain*(.5+.40*Math.sin(2*Math.PI*t+c.phase))+.3*c.gain*Math.sin(6*Math.PI*t);seg.push({lon,lat,ele,time:null});}added.push(addRoute({segments:[seg],name:c.name,format:'GPX'},'exemplo fictício',true));}
- renderList();refreshMapStyles();zoomTo(added);selectRoute(added[0].id);$('map-hint').textContent='Percursos inventados para testar a interface; não usar para navegação.';toast('3 caminhadas fictícias adicionadas. Não correspondem a trilhos reais.');}
+ renderList();refreshMapStyles();renderComparison();toast('3 percursos fictícios carregados para experimentares a comparação.');}
 function toggleSatellite(){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}isSatellite=!isSatellite;const id='satellite-layer';try{if(isSatellite&&!map.getSource('satellite-img'))map.addSource('satellite-img',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagens © Esri, Maxar, Earthstar Geographics, GIS User Community'});if(isSatellite&&!map.getLayer(id)){const firstTrack=routes.find(r=>map.getLayer('track-under-'+r.id));const before=firstTrack?'track-under-'+firstTrack.id:(map.getLayer('route-endpoints')?'route-endpoints':undefined);map.addLayer({id,type:'raster',source:'satellite-img',paint:{'raster-opacity':1}},before);}if(map.getLayer(id))map.setLayoutProperty(id,'visibility',isSatellite?'visible':'none');$('satellite-mode').classList.toggle('active',isSatellite);$('satellite-mode').setAttribute('aria-pressed',String(isSatellite));}catch(e){toast('Não foi possível mudar para imagens de satélite.');isSatellite=false;}}
 function setMode(terrain){is3D=terrain;$('mode-2d').classList.toggle('active',!terrain);$('mode-3d').classList.toggle('active',terrain);$('mode-2d').setAttribute('aria-pressed',String(!terrain));$('mode-3d').setAttribute('aria-pressed',String(terrain));if(!mapReady){toast('O mapa ainda está a iniciar.');return;}try{
  if(terrain){if(!map.getSource('terrain-dem'))map.addSource('terrain-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:14,encoding:'terrarium',attribution:'Mapzen Terrain Tiles · AWS Open Data'});map.setTerrain({source:'terrain-dem',exaggeration:1});map.setProjection({type:'globe'});map.easeTo({pitch:66,bearing:-22,duration:900});status('Relevo 3D ativo. Arrasta para rodar e inclinar; depende da ligação aos dados de altitude.',true);setTimeout(()=>status('',false),5500);}else{map.setTerrain(null);map.setProjection({type:'mercator'});map.easeTo({pitch:0,bearing:0,duration:750});status('',false);}
@@ -380,8 +265,52 @@ function renderProfile(r){const c=$('profile');const rect=c.getBoundingClientRec
  c.onmousemove=event=>{const box=c.getBoundingClientRect(),x=Math.max(0,Math.min(1,(event.clientX-box.left-pad.l)/(box.width-pad.l-pad.r)));const target=x*r.stats.distance;let lo=0,hi=samples.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(samples[mid].d<target)lo=mid+1;else hi=mid;}let s=samples[lo];if(lo>0&&Math.abs(samples[lo-1].d-target)<Math.abs(s.d-target))s=samples[lo-1];$('chart-label').textContent=fmtKm(s.d)+' · '+fmtM(s.e);map?.getSource('profile-cursor')?.setData({type:'Feature',properties:{},geometry:{type:'Point',coordinates:[s.p.lon,s.p.lat]}});};
  c.onmouseleave=()=>{$('chart-label').textContent='Passa o rato no gráfico';map?.getSource('profile-cursor')?.setData(emptyGeo);};
 }
-function renderComparison(){if($('comparison').hidden)return;const r=routes.filter(x=>x.visible);const box=$('comparison');box.replaceChildren();if(!r.length){box.textContent='Não existem percursos visíveis.';return;}
- const table=el('table');const thead=el('thead'),row=el('tr');row.append(el('th',null,'Percurso'));for(const col of ['Distância','D+','D−','Subida máx. 200 m','Descida máx. 200 m','Subida >10%','Tempo em movimento'])row.append(el('th',null,col));thead.append(row);table.append(thead);const tbody=el('tbody');for(const route of r){const tr=el('tr'),name=el('td',null,route.name);name.style.borderLeft='3px solid '+route.color;tr.append(name,el('td',null,fmtKm(route.stats.distance)),el('td',null,route.stats.hasElevation?fmtM(route.stats.ascent):'—'),el('td',null,route.stats.hasElevation?fmtM(route.stats.descent):'—'),el('td',null,fmtGrade(route.advanced.slopes[200].up)),el('td',null,fmtGrade(route.advanced.slopes[200].down)),el('td',null,route.advanced.covered?Math.round(route.advanced.distribution[4])+'%':'—'),el('td',null,fmtTime(route.motion.movingMs)));tbody.append(tr);}table.append(tbody);box.append(table);}
+
+function renderComparison(){
+  const chosen=routes.filter(r=>r.visible).slice(0,4);$('compare-count').textContent=chosen.length+' / 4';
+  const slot=$('comparison');slot.replaceChildren();
+  if(!chosen.length){slot.append(el('div','welcome'));slot.firstChild.append(el('strong',null,routes.length?'Escolhe um ou mais percursos':'Começa por importar GPX ou KML'),document.createTextNode(routes.length?'Assinala as caixas na lista para comparar até 4 caminhadas.':'Os dados aparecem imediatamente aqui, lado a lado. Podes experimentar os exemplos fictícios.'));renderOverlay();return;}
+  const scroll=el('div','compare-scroll');const table=el('table','compare-table');const head=el('thead'),row=el('tr');
+  row.append(el('th',null,'Indicador'));
+  for(const r of chosen){const th=el('th');const n=el('div','column-name');const dot=el('span','color-dot');dot.style.backgroundColor=r.color;const main=el('div');const link=el('button',null,r.name);link.title='Abrir análise detalhada';link.onclick=()=>selectRoute(r.id);main.append(link,el('div','col-meta',r.demo?'Demonstração':'GPX / KML'));n.append(dot,main);th.append(n);row.append(th);}
+  head.append(row);table.append(head);
+  const data=[
+    ['Distância',r=>fmtKm(r.stats.distance)],
+    ['Desnível positivo (D+)',r=>r.stats.hasElevation?fmtM(r.stats.ascent):'—'],
+    ['Desnível negativo (D−)',r=>r.stats.hasElevation?fmtM(r.stats.descent):'—'],
+    ['D+ por km',r=>r.stats.hasElevation&&r.stats.distance>0?Math.round(r.stats.ascent/(r.stats.distance/1000))+' m/km':'—'],
+    ['Inclinação média a subir',r=>pct(r.advanced.averageUp)],
+    ['Inclinação média a descer',r=>pct(r.advanced.averageDown)],
+    ['Subida máx. em 200 m',r=>fmtGrade(r.advanced.slopes[200].up)],
+    ['Descida máx. em 200 m',r=>fmtGrade(r.advanced.slopes[200].down)],
+    ['Distância em subidas >10%',r=>r.advanced.covered?pct(r.advanced.distribution[4]):'—'],
+    ['Tempo em movimento',r=>fmtTime(r.motion.movingMs)],
+    ['Velocidade em movimento',r=>r.motion.avgKmh?pct(r.motion.avgKmh).replace(' %',' km/h'):'—']
+  ];
+  const body=el('tbody');for(const [label,calc] of data){const tr=el('tr');tr.append(el('td',null,label));for(const r of chosen)tr.append(el('td',null,calc(r)));body.append(tr);}table.append(body);scroll.append(table);slot.append(scroll);renderOverlay();
+}
+function profileAltitudeAt(r,d){const p=r.stats.profile.filter(x=>Number.isFinite(x.e));if(p.length<2||d<p[0].d||d>p[p.length-1].d)return null;let lo=0,hi=p.length-1;while(lo<hi){const mid=(lo+hi)>>1;if(p[mid].d<d)lo=mid+1;else hi=mid;}const b=p[lo],a=p[Math.max(0,lo-1)];if(a===b||b.d===a.d)return b.e;return a.e+(b.e-a.e)*(d-a.d)/(b.d-a.d);}
+function renderOverlay(){
+ const c=$('overlay-profile'),ctx=c.getContext('2d');if(!ctx)return;
+ const b=c.getBoundingClientRect(),w=Math.max(300,Math.round(b.width||750)),h=Math.max(170,Math.round(b.height||230)),dpr=Math.min(2,window.devicePixelRatio||1);c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ const legend=$('overlay-legend');legend.replaceChildren();const chosen=routes.filter(r=>r.visible).slice(0,4);
+ if(!chosen.length){$('overlay-caption').textContent='Seleciona percursos para sobrepor os perfis altimétricos.';ctx.fillStyle='#8fa59a';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('Sem percursos selecionados',w/2,h/2);c.onmousemove=null;c.onmouseleave=null;return;}
+ for(const r of chosen){const item=el('span','legend-item');const line=el('span','legend-line');line.style.background=r.color;item.append(line,el('span',null,r.name));legend.append(item);}
+ const valid=chosen.filter(r=>r.stats.hasElevation&&r.stats.profile.some(p=>p.e!==null));
+ if(!valid.length){ctx.fillStyle='#8b9e92';ctx.font='12px system-ui';ctx.fillText('Os ficheiros não têm altitudes suficientes.',20,h/2);$('overlay-caption').textContent='Sem dados de altitude suficientes.';return;}
+ const maxD=Math.max(1,...valid.map(r=>r.stats.distance)),minE=Math.min(...valid.map(r=>r.stats.minEle)),maxE=Math.max(...valid.map(r=>r.stats.maxEle));const rng=Math.max(40,maxE-minE);const base=minE-rng*.07,top=maxE+rng*.12;const pad={l:53,r:18,t:14,b:32};const innerW=Math.max(5,w-pad.l-pad.r),innerH=Math.max(5,h-pad.t-pad.b);const X=d=>pad.l+innerW*Math.min(1,d/maxD),Y=e=>pad.t+innerH*(top-e)/(top-base);
+ ctx.lineWidth=1;ctx.strokeStyle='#e6eee8';ctx.fillStyle='#83948a';ctx.font='10px system-ui';ctx.textAlign='right';
+ for(let k=0;k<=4;k++){const value=base+(top-base)*(4-k)/4,y=pad.t+innerH*k/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText(Math.round(value)+' m',pad.l-7,y+3);}
+ ctx.textAlign='center';for(let k=0;k<=4;k++){const d=maxD*k/4,x=X(d);ctx.fillText((d/1000).toLocaleString('pt-PT',{maximumFractionDigits:1})+' km',x,h-11);}
+ for(const r of valid){ctx.beginPath();let started=false,previous=null;for(const p of r.stats.profile){if(p.e===null||!Number.isFinite(p.e)){started=false;continue;}if(previous&&(p.d<=previous.d||p.d-previous.d>500))started=false;const x=X(p.d),y=Y(p.e);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);previous=p;}ctx.strokeStyle=r.color;ctx.lineWidth=2.7;ctx.lineJoin='round';ctx.stroke();}
+ if(overlayHover!==null){const d=Math.min(maxD,Math.max(0,overlayHover)),x=X(d);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,h-pad.b);ctx.strokeStyle='#7d8c83';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);const readings=[];for(const r of valid){const e=profileAltitudeAt(r,d);if(e===null)continue;ctx.beginPath();ctx.arc(x,Y(e),4.5,0,Math.PI*2);ctx.fillStyle=r.color;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();readings.push(r.name+': '+Math.round(e)+' m');}$('overlay-caption').textContent='Km '+(d/1000).toLocaleString('pt-PT',{maximumFractionDigits:2})+' · '+readings.join(' · ');}
+ else $('overlay-caption').textContent='Passa o rato no gráfico para comparar a altitude no mesmo quilómetro.';
+ c.onmousemove=e=>{const box=c.getBoundingClientRect();const px=(e.clientX-box.left)*(w/box.width);overlayHover=Math.max(0,Math.min(maxD,(px-pad.l)/innerW*maxD));renderOverlay();};
+ c.onmouseleave=()=>{overlayHover=null;renderOverlay();};
+}
+function openMap(callback){if(!mapOpen){mapOpen=true;$('map-surface').hidden=false;$('map-toggle').textContent='Ocultar mapa';$('map-toggle').setAttribute('aria-expanded','true');if(!map)createMap();}
+ requestAnimationFrame(()=>{if(map)map.resize();if(callback&&mapReady)callback();else if(!mapReady&&callback&&map)map.once('load',()=>{map.resize();callback();});});}
+function toggleMap(){if(mapOpen){mapOpen=false;$('map-surface').hidden=true;$('map-toggle').textContent='Abrir mapa';$('map-toggle').setAttribute('aria-expanded','false');}else openMap(()=>{if(routes.some(r=>r.visible))zoomTo(routes.filter(r=>r.visible));});}
 function createMap(){if(typeof maplibregl==='undefined'){status('Não foi possível carregar o motor do mapa. Verifica a ligação à Internet ou abre o site através de um servidor Web.',true);return;}
  try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
  map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);refreshMapStyles();});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
@@ -396,4 +325,22 @@ window.addEventListener('error',ev=>{if(ev.message?.includes('ResizeObserver'))r
 renderList();createMap();
 </script>
 </body>
-</html>
+</html
+$('choose-files').onclick=$('top-upload').onclick=()=>$('file-input').click();
+$('file-input').onchange=e=>{importFiles(e.target.files);e.target.value='';};
+$('demo-btn').onclick=()=>{loadDemo();};
+$('clear-all').onclick=()=>{if(routes.length&&confirm('Remover todos os percursos desta sessão?'))clearAll();};
+$('search').oninput=renderList;
+$('map-toggle').onclick=toggleMap;
+$('satellite-mode').onclick=toggleSatellite;
+$('mode-2d').onclick=()=>setMode(false);
+$('mode-3d').onclick=()=>setMode(true);
+$('fit-all-map').onclick=()=>zoomTo(routes.filter(r=>r.visible));
+$('reset-view').onclick=()=>{if(mapReady)map.flyTo({center:[-8.265,40.868],zoom:11.5,pitch:is3D?60:0,duration:950});};
+$('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');renderList();refreshMapStyles();};
+$('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
+const zone=$('dropzone');for(const target of [zone,document.body]){target.addEventListener('dragover',e=>{if(!e.dataTransfer.types.includes('Files'))return;e.preventDefault();zone.classList.add('drag');});target.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag');});target.addEventListener('drop',e=>{if(!e.dataTransfer.files.length)return;e.preventDefault();zone.classList.remove('drag');importFiles(e.dataTransfer.files);});}
+zone.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===zone){e.preventDefault();$('file-input').click();}});
+window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
+renderList();renderComparison();
+</script></body></html>
