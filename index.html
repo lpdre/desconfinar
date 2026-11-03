@@ -81,6 +81,15 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
  .pitch-control{bottom:33px;left:8px;padding:8px 9px}.pitch-control input{width:98px;max-width:34vw}
  .measure-panel{padding:9px 11px}.measure-readout{font-size:11px}
 }
+
+/* Navegação compacta entre trilhos na ficha de análise. */
+.detail-heading{flex:1;min-width:0}
+.detail-nav{display:flex;align-items:center;flex:0 0 auto;gap:6px}
+.detail-nav-arrow{width:34px;height:34px;border:1px solid var(--line);background:#f7faf6;color:#284e3b;border-radius:9px;font-size:23px;line-height:1;display:grid;place-items:center;padding:0}
+.detail-nav-arrow:hover:not(:disabled){background:#e5f2e1}
+.detail-nav-count{min-width:45px;text-align:center;color:#607c6e;font-size:11px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+#details{touch-action:pan-y}
+@media(max-width:480px){.analysis-card .panel-head{gap:7px}.detail-nav{gap:3px}.detail-nav-arrow{width:31px;height:31px}.detail-nav-count{min-width:37px;font-size:10px}.detail-nav .panel-dismiss{width:29px;height:31px}.panel-name{font-size:14px}}
 </style></head><body>
 <header class="site-head">
   <div class="logo"><div class="logo-mark" aria-hidden="true">⌁</div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
@@ -117,7 +126,7 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
       <div class="inner"><div class="legend" id="overlay-legend"></div><canvas id="overlay-profile" role="img" aria-label="Comparação dos perfis de altitude"></canvas><div id="overlay-caption" aria-live="polite"></div></div>
     </section>
     <section class="card analysis-card hide" data-pane="analyse" id="details" aria-labelledby="detail-name">
-      <div class="panel-head"><div><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div>
+      <div class="panel-head"><div class="detail-heading"><div class="panel-name" id="detail-name">Percurso</div><div class="panel-sub" id="detail-origin"></div></div><div class="detail-nav" aria-label="Navegar entre percursos"><button class="detail-nav-arrow" id="detail-prev" type="button" aria-label="Percurso anterior" title="Percurso anterior">‹</button><span class="detail-nav-count" id="detail-position" aria-live="polite">—</span><button class="detail-nav-arrow" id="detail-next" type="button" aria-label="Percurso seguinte" title="Percurso seguinte">›</button><button class="panel-dismiss" id="close-details" aria-label="Fechar análise">×</button></div></div>
       <div class="panel-main">
         <div class="metrics-grid" id="detail-metrics"></div>
         <div class="chart-head"><strong>Perfil individual</strong><small id="chart-label"></small></div><canvas id="profile" role="img" aria-label="Perfil altimétrico individual"></canvas>
@@ -305,18 +314,53 @@ function renderList(){
    item.append(visible,dot,main,actions);list.append(item);
  }
 }
-function selectRoute(id){
+function selectRoute(id,{scroll=true}={}){
   const r=routes.find(x=>x.id===id);if(!r)return;selectedId=id;
+  updateDetailNavigation();
   $('details').classList.remove('hide');if(currentView!=='all'&&currentView!=='analyse')setView('analyse');$('detail-name').textContent=r.name;$('detail-name').style.color=r.color;
   $('detail-origin').textContent=r.demo?'Exemplo fictício para testar a comparação':r.format+' · '+r.sourceName;
   const grid=$('detail-metrics');grid.replaceChildren();const st=r.stats;
   for(const [label,value] of [['Distância',fmtKm(st.distance)],['Desnível D+',st.hasElevation?fmtM(st.ascent):'—'],['Desnível D−',st.hasElevation?fmtM(st.descent):'—'],['Altitude mínima',fmtM(st.minEle)],['Altitude máxima',fmtM(st.maxEle)],['Tempo total',fmtTime(st.duration)],['Tempo em movimento',fmtTime(r.motion.movingMs)],['Velocidade em movimento',r.motion.avgKmh?r.motion.avgKmh.toLocaleString('pt-PT',{maximumFractionDigits:1})+' km/h':'—'],['Subida por km',st.hasElevation&&st.distance>0?Math.round(st.ascent/(st.distance/1000))+' m/km':'—']]){const cell=el('div','metric');cell.append(el('span',null,label),el('strong',null,value));grid.append(cell);}
   renderAdvanced(r);renderList();refreshMapStyles();
-  requestAnimationFrame(()=>{renderProfile(r);$('details').scrollIntoView({behavior:'smooth',block:'start'});});
+  requestAnimationFrame(()=>{renderProfile(r);if(scroll)$('details').scrollIntoView({behavior:'smooth',block:'start'});});
   if(r.motion.possibleNonWalking)toast('O ficheiro tem velocidades pouco compatíveis com caminhadas. Confirma o percurso.');
 }
-function removeRoute(id){const at=routes.findIndex(r=>r.id===id);if(at<0)return;removeMapRoute(id);routes.splice(at,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}renderList();refreshMapStyles();renderComparison();}
-function clearAll(){for(const r of routes)removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');overlayHover=null;renderList();refreshMapStyles();renderComparison();}
+
+function updateDetailNavigation(){
+ const index=routes.findIndex(r=>r.id===selectedId);
+ $('detail-position').textContent=index<0?'—':(index+1)+' / '+routes.length;
+ for(const id of ['detail-prev','detail-next'])$(id).disabled=index<0||routes.length<2;
+}
+function navigateDetail(step){
+ if(!routes.length)return;
+ const index=routes.findIndex(r=>r.id===selectedId);
+ const next=(index<0?0:(index+step+routes.length)%routes.length);
+ const r=routes[next];
+ if(r)selectRoute(r.id,{scroll:false});
+}
+function initDetailSwipe(){
+ const detail=$('details');
+ let start=null;
+ detail.addEventListener('touchstart',e=>{
+   if(currentView!=='analyse'||e.touches.length!==1){start=null;return;}
+   if(e.target.closest('button,input,select,textarea,a')){start=null;return;}
+   const t=e.touches[0];start={x:t.clientX,y:t.clientY};
+ },{passive:true});
+ detail.addEventListener('touchend',e=>{
+   if(!start||currentView!=='analyse'||e.changedTouches.length!==1){start=null;return;}
+   const t=e.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
+   start=null;
+   if(Math.abs(dx)>=55&&Math.abs(dx)>Math.abs(dy)*1.4)navigateDetail(dx<0?1:-1);
+ },{passive:true});
+ detail.addEventListener('touchcancel',()=>{start=null;},{passive:true});
+ detail.addEventListener('keydown',e=>{
+   if(currentView!=='analyse'||e.altKey||e.ctrlKey||e.metaKey)return;
+   if(e.target.closest('button,input,select,textarea,a'))return;
+   if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();navigateDetail(e.key==='ArrowRight'?1:-1);}
+ });
+}
+function removeRoute(id){const at=routes.findIndex(r=>r.id===id);if(at<0)return;removeMapRoute(id);routes.splice(at,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
+function clearAll(){for(const r of routes)removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');overlayHover=null;updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
 async function importFiles(files){const accepted=Array.from(files).filter(f=>/\.(gpx|kml)$/i.test(f.name));if(!accepted.length){toast('Seleciona ficheiros .gpx ou .kml.');return;}
  let n=0,err=[];for(const f of accepted){try{if(f.size>20*1024*1024)throw Error('ficheiro maior que 20 MB');const parsed=parseText(await f.text(),f.name);const prior=routes.filter(r=>r.visible).length;const r=addRoute(parsed,f.name);r.visible=prior<4;n++;}catch(e){err.push(f.name+': '+e.message);}}
  renderList();refreshMapStyles();renderComparison();
@@ -466,7 +510,10 @@ $('pitch-slider').oninput=value=>{const p=Number($('pitch-slider').value);$('pit
 $('measure-toggle').onclick=toggleMeasure;
 $('measure-undo').onclick=()=>{if(measurePoints.length){measurePoints.pop();renderMeasure();}};
 $('measure-clear').onclick=()=>{measurePoints=[];renderMeasure();};
-$('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');renderList();refreshMapStyles();if(currentView==='analyse')setView('all');};
+$('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');updateDetailNavigation();renderList();refreshMapStyles();if(currentView==='analyse')setView('all');};
+$('detail-prev').onclick=()=>navigateDetail(-1);
+$('detail-next').onclick=()=>navigateDetail(1);
+initDetailSwipe();
 $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
 renderList();renderComparison();
