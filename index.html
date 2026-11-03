@@ -90,6 +90,7 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 .detail-nav-count{min-width:45px;text-align:center;color:#607c6e;font-size:11px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
 #details{touch-action:pan-y}
 @media(max-width:480px){.analysis-card .panel-head{gap:7px}.detail-nav{gap:3px}.detail-nav-arrow{width:31px;height:31px}.detail-nav-count{min-width:37px;font-size:10px}.detail-nav .panel-dismiss{width:29px;height:31px}.panel-name{font-size:14px}}
+.sidebar-title .button{white-space:nowrap}.empty-list .button{background:#e8f2e2;border-color:#c9ddc8;color:#2b6046}
 </style></head><body>
 <header class="site-head">
   <div class="logo"><div class="logo-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 25 12 10l5 9 5-12 8 18H3Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="m9 25 7-8 4 4 3-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
@@ -103,7 +104,7 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
 </nav>
 <div class="workspace">
   <aside class="card sidebar" aria-label="Percursos disponíveis">
-    <div class="sidebar-title"><h2>Percursos</h2><div style="display:flex;align-items:center;gap:8px"><span class="count" id="route-count">0 trilhos</span><button class="button tiny quiet" id="clear-all" title="Remover todos os percursos">Limpar</button></div></div>
+    <div class="sidebar-title"><h2>Percursos</h2><div style="display:flex;align-items:center;gap:8px"><span class="count" id="route-count">0 trilhos</span><button class="button tiny quiet" id="clear-all" title="Remover todos os percursos e começar de novo">Limpar tudo</button></div></div>
     <div id="track-list" class="track-list"></div>
     
   </aside>
@@ -295,7 +296,7 @@ function setView(view){
 function pct(n){return n==null||!Number.isFinite(n)?'—':n.toLocaleString('pt-PT',{maximumFractionDigits:1,minimumFractionDigits:1})+' %';}
 function renderList(){
  const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
- if(!routes.length){list.append(el('div','empty-list','Sem percursos.'));return;}
+ if(!routes.length){const box=el('div','empty-list');const btn=el('button','button tiny','Carregar exemplos');btn.type='button';btn.onclick=()=>loadDemo({silent:false});box.append(btn);list.append(box);return;}
  for(const r of routes){
    const item=el('div','route-row'+(selectedId===r.id?' selected':''));
    const visible=el('input','route-checkbox');visible.type='checkbox';visible.checked=r.visible;
@@ -359,16 +360,64 @@ function initDetailSwipe(){
    if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();navigateDetail(e.key==='ArrowRight'?1:-1);}
  });
 }
-function removeRoute(id){const at=routes.findIndex(r=>r.id===id);if(at<0)return;removeMapRoute(id);routes.splice(at,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
-function clearAll(){for(const r of routes)removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');overlayHover=null;updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
-async function importFiles(files){const accepted=Array.from(files).filter(f=>/\.(gpx|kml)$/i.test(f.name));if(!accepted.length){toast('Seleciona ficheiros .gpx ou .kml.');return;}
- let n=0,err=[];for(const f of accepted){try{if(f.size>20*1024*1024)throw Error('ficheiro maior que 20 MB');const parsed=parseText(await f.text(),f.name);const prior=routes.filter(r=>r.visible).length;const r=addRoute(parsed,f.name);r.visible=prior<4;n++;}catch(e){err.push(f.name+': '+e.message);}}
+function removeRoute(id){const at=routes.findIndex(r=>r.id===id);if(at<0)return;if(routes[at].demo)markDemoDismissed();removeMapRoute(id);routes.splice(at,1);if(selectedId===id){selectedId=null;$('details').classList.add('hide');}updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
+function clearAll(){markDemoDismissed();for(const r of routes)removeMapRoute(r.id);routes.length=0;selectedId=null;$('details').classList.add('hide');overlayHover=null;updateDetailNavigation();renderList();refreshMapStyles();renderComparison();}
+
+const demoSessionKey='desconfinar-demo-dismissed-v1';
+function markDemoDismissed(){try{sessionStorage.setItem(demoSessionKey,'1');}catch(e){}}
+function shouldPreloadDemo(){try{return sessionStorage.getItem(demoSessionKey)!=='1';}catch(e){return true;}}
+async function importFiles(files){
+ const accepted=Array.from(files).filter(f=>/\.(gpx|kml)$/i.test(f.name));
+ if(!accepted.length){toast('Seleciona ficheiros .gpx ou .kml.');return;}
+ let n=0,errors=[],removed=false;
+ for(const file of accepted){
+  try {
+   if(file.size>20*1024*1024)throw new Error('ficheiro maior que 20 MB');
+   const parsed=parseText(await file.text(),file.name);
+   if(!removed){
+    markDemoDismissed();
+    for(const d of [...routes].filter(r=>r.demo))removeRoute(d.id);
+    removed=true;
+   }
+   const wasVisible=routes.filter(r=>r.visible).length;
+   const r=addRoute(parsed,file.name);r.visible=wasVisible<4;n++;
+  }catch(e){errors.push(file.name+': '+e.message);}
+ }
  renderList();refreshMapStyles();renderComparison();
- toast((n?n+' percurso(s) importado(s). ':'')+(err.length?err.length+' não importado(s): '+err.slice(0,2).join(' | '):''));if(mapOpen&&mapReady&&n)zoomTo(routes.filter(r=>r.visible));
+ if(mapOpen&&mapReady&&n)zoomTo(routes.filter(r=>r.visible));
+ toast((n?n+' percurso(s) importado(s). ':'')+(errors.length?errors.length+' não importado(s): '+errors.slice(0,2).join(' | '):''));
 }
-function loadDemo(){if(routes.some(r=>r.demo)){toast('Os exemplos fictícios já estão carregados.');return;}const starts=[[-8.266,40.872],[-8.266,40.872],[-8.266,40.872]], configs=[{name:'Circuito curto · demonstração',count:130,shift:.010,phase:.3,gain:240},{name:'Travessia panorâmica · demonstração',count:175,shift:.024,phase:1.1,gain:490},{name:'Variante da cumeada · demonstração',count:150,shift:.017,phase:2.1,gain:390}];let added=[];
- for(let j=0;j<configs.length;j++){const c=configs[j],seg=[];for(let i=0;i<=c.count;i++){const t=i/c.count,angle=2*Math.PI*t,lon=starts[j][0]+.026*Math.sin(angle)+c.shift*Math.sin(Math.PI*t)*Math.cos(2*angle),lat=starts[j][1]+.018*Math.cos(angle)+c.shift*.68*Math.sin(3*angle)*Math.sin(Math.PI*t),ele=670+c.gain*(.5+.40*Math.sin(2*Math.PI*t+c.phase))+.3*c.gain*Math.sin(6*Math.PI*t);seg.push({lon,lat,ele,time:null});}const allowed=routes.filter(r=>r.visible).length<4;const addedRoute=addRoute({segments:[seg],name:c.name,format:'GPX'},'exemplo fictício',true);addedRoute.visible=allowed;added.push(addedRoute);}
- renderList();refreshMapStyles();renderComparison();toast('3 percursos fictícios carregados para experimentares a comparação.');}
+// GPX sintéticos de demonstração: gerados e analisados pelo mesmo parser de ficheiros reais.
+// Estes traçados são INVENTADOS, não servem para orientação ou navegação.
+function loadDemo({silent=false}={}){
+ if(routes.some(r=>r.demo)){if(!silent)toast('Os exemplos já estão carregados.');return;}
+ const configs=[
+  {name:'Exemplo A · Circuito curto (fictício)',count:130,shift:.010,phase:.3,gain:240},
+  {name:'Exemplo B · Circuito longo (fictício)',count:175,shift:.024,phase:1.1,gain:490},
+  {name:'Exemplo C · Variante de montanha (fictício)',count:150,shift:.017,phase:2.1,gain:390}
+ ];
+ const center=[-8.266,40.872],initial=Date.parse('2026-10-10T08:00:00.000Z');
+ for(const c of configs){
+  const pts=[];let ms=0,prev=null;
+  for(let i=0;i<=c.count;i++){
+   const t=i/c.count,angle=2*Math.PI*t;
+   const lon=center[0]+.026*Math.sin(angle)+c.shift*Math.sin(Math.PI*t)*Math.cos(2*angle);
+   const lat=center[1]+.018*Math.cos(angle)+c.shift*.68*Math.sin(3*angle)*Math.sin(Math.PI*t);
+   const ele=670+c.gain*(.5+.40*Math.sin(2*Math.PI*t+c.phase))+.3*c.gain*Math.sin(6*Math.PI*t);
+   const p={lon,lat,ele};
+   if(prev)ms+=Math.max(3000,Math.round(haversine(prev,p)/.95*1000));
+   pts.push('<trkpt lat="'+lat.toFixed(7)+'" lon="'+lon.toFixed(7)+'"><ele>'+ele.toFixed(2)+'</ele><time>'+new Date(initial+ms).toISOString()+'</time></trkpt>');
+   prev=p;
+  }
+  const xml='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Desconfinar" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>'+c.name+'</name><trkseg>'+pts.join('')+'</trkseg></trk></gpx>';
+  const parsed=parseText(xml,'exemplo.gpx');
+  const before=routes.filter(r=>r.visible).length;
+  const r=addRoute(parsed,'GPX fictício',true);r.visible=before<4;
+ }
+ renderList();refreshMapStyles();renderComparison();
+ if(mapOpen&&mapReady)zoomTo(routes.filter(r=>r.visible));
+ if(!silent)toast('3 percursos GPX fictícios carregados. Não são trilhos reais.');
+}
 function toggleSatellite(){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}isSatellite=!isSatellite;const id='satellite-layer';try{if(isSatellite&&!map.getSource('satellite-img'))map.addSource('satellite-img',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagens © Esri, Maxar, Earthstar Geographics, GIS User Community'});if(isSatellite&&!map.getLayer(id)){const firstTrack=routes.find(r=>map.getLayer('track-under-'+r.id));const before=firstTrack?'track-under-'+firstTrack.id:(map.getLayer('route-endpoints')?'route-endpoints':undefined);map.addLayer({id,type:'raster',source:'satellite-img',paint:{'raster-opacity':1}},before);}if(map.getLayer(id))map.setLayoutProperty(id,'visibility',isSatellite?'visible':'none');$('satellite-mode').classList.toggle('active',isSatellite);$('satellite-mode').setAttribute('aria-pressed',String(isSatellite));}catch(e){toast('Não foi possível mudar para imagens de satélite.');isSatellite=false;}}
 function setMode(terrain){is3D=terrain;$('pitch-control').hidden=!terrain;$('mode-2d').classList.toggle('active',!terrain);$('mode-3d').classList.toggle('active',terrain);$('mode-2d').setAttribute('aria-pressed',String(!terrain));$('mode-3d').setAttribute('aria-pressed',String(terrain));if(!mapReady){toast('O mapa ainda está a iniciar.');return;}try{
  if(terrain){if(!map.getSource('terrain-dem'))map.addSource('terrain-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:14,encoding:'terrarium',attribution:'Mapzen Terrain Tiles · AWS Open Data'});map.setTerrain({source:'terrain-dem',exaggeration:1});map.setProjection({type:'globe'});map.easeTo({pitch:Number($('pitch-slider').value),bearing:-10,duration:900});status('',false);}else{map.setTerrain(null);map.setProjection({type:'mercator'});map.easeTo({pitch:0,bearing:0,duration:750});status('',false);}
@@ -516,7 +565,7 @@ $('detail-next').onclick=()=>navigateDetail(1);
 initDetailSwipe();
 $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
-renderList();renderComparison();
+if(shouldPreloadDemo())loadDemo({silent:true});else{renderList();renderComparison();}
 // A versão 6 do MapLibre só fornece o módulo ESM; o antigo ficheiro .js já não existe.
 async function loadMapEngine(){
   const sources=[
