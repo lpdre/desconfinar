@@ -6,6 +6,16 @@ Site pessoal, simples e independente, para **analisar e comparar caminhadas** a 
 
 O site abre por defeito em **Tudo**, com comparação, mapa 2D e perfil altimétrico na mesma página. Os separadores **Mapa**, **Comparar** e **Analisar** permitem isolar o conteúdo quando for mais cómodo, especialmente no telemóvel. Na comparação em ecrãs pequenos, as colunas usam círculos com a cor e o número do percurso; os nomes completos estão na legenda por baixo. O botão único para importar GPX/KML está no cabeçalho.
 
+## Exemplos e começar do zero
+
+Ao abrir o site numa sessão nova, são carregados automaticamente **três percursos GPX fictícios** (gerados no navegador e processados pelo mesmo analisador dos ficheiros importados). Servem só para experimentar a comparação, o mapa e as métricas — **não correspondem a trilhos reais nem servem para orientação**.
+
+- Para remover **um percurso**, usa o botão **×** da respetiva linha.
+- Para remover **todos os percursos**, escolhe **Limpar tudo** e confirma. A análise, o mapa e os perfis deixam de mostrar esses trilhos.
+- Depois de limpar, aparece o botão **Carregar exemplos**, caso os queiras repor.
+- Ao importar o primeiro ficheiro GPX/KML teu, os exemplos são automaticamente removidos, sem ocuparem vagas de comparação.
+- Os exemplos não reaparecem automaticamente após uma limpeza ou importação enquanto a mesma sessão do separador estiver ativa.
+
 ## Como experimentar
 
 1. Abre o site e seleciona **Escolher ficheiros**. Podes importar vários GPX/KML de uma vez.
