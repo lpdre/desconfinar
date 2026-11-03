@@ -27,6 +27,14 @@ Ao abrir o site numa sessão nova, são carregados automaticamente **três percu
 
 Para conhecer a interface sem GPX, escolhe **Experimentar com 3 exemplos fictícios**. Estes exemplos não correspondem a caminhos reais e não servem para navegação.
 
+## Analisar um troço A–B no GPX
+
+Na vista **Analisar**, seleciona um percurso e carrega em **Marcar A–B**. Assinala os pontos A e B com dois toques/cliques no **perfil altimétrico** ou, no computador, arrasta sobre o perfil para selecionar o intervalo. Na vista **Tudo**, também podes marcar A e B clicando perto do **traçado selecionado no mapa**. Enquanto estiveres a marcar A–B, a régua livre **Medir distâncias** fica desativada para não confundir as duas medições.
+
+A seleção aparece em amarelo no mapa, acompanha o traçado GPX e mostra as extremidades A/B. O perfil individual assinala o mesmo intervalo. O painel calcula **distância do troço, D+, D−, inclinação média a subir, maior subida numa janela de 200 m e tempo decorrido** quando existem timestamps válidos.
+
+**Limpar** apaga os pontos A/B e permite recomeçar; **Parar marcação** conserva o intervalo até o alterares ou mudares de percurso. O cálculo respeita quebras entre segmentos GPX e não traça linhas retas a unir esses segmentos. Os valores de altitude e inclinação continuam sujeitos ao ruído do GPS.
+
 ## Lista, medição e relevo 3D
 
 - **Lista compacta:** cada percurso tem uma linha curta com nome truncado, distância, D+ e ações pequenas (analisar, enquadrar no mapa e remover). No telemóvel a lista tem altura limitada e deslocação vertical.
