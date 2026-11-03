@@ -55,6 +55,32 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
  .compare-table th,.compare-table td{padding:8px 3px}
  .compare-table td:not(:first-child){font-size:9px}
 }
+
+/* Lista compacta: uma linha de ações e duas linhas de informação por percurso. */
+.track-list{display:block;max-height:min(54vh,500px);overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
+.route-row{display:flex;align-items:center;gap:7px;min-height:50px;border-bottom:1px solid #edf1eb;padding:5px 2px}
+.route-row:last-child{border-bottom:0}.route-row.selected{background:#f3f9f0;border-radius:7px}
+.route-checkbox{width:16px;height:16px;flex:0 0 16px;accent-color:#347a55;cursor:pointer}
+.route-swatch{width:4px;height:27px;border-radius:4px;flex:0 0 4px}
+.route-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.route-name{max-width:100%;width:100%;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;border:0;background:none;font-size:12px;color:#284e3c;font-weight:750;text-align:left;padding:0}
+.route-summary{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:10px;color:#7c8f83}
+.route-tools{display:flex;align-items:center;flex-shrink:0;gap:1px}
+.route-tool{width:25px;height:28px;border:0;background:transparent;border-radius:7px;font-size:17px;line-height:1;color:#667e70;padding:0}
+.route-tool:hover{background:#e8f0e6;color:#1e4f3b}.route-remove{font-size:20px}
+.map-head-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.measure-active{background:#dff4c0!important;border-color:#9cbf8d!important;color:#224b30!important}
+.measure-panel{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 16px;background:#f6fbef;border-top:1px solid var(--line)}
+.measure-panel[hidden]{display:none}.measure-readout{font-size:12px;color:#385848;font-weight:600}.measure-actions{display:flex;gap:6px}
+.pitch-control{position:absolute;left:12px;bottom:30px;z-index:5;background:#fffffff2;border-radius:10px;box-shadow:0 4px 18px #153d3429;border:1px solid #dfe9df;padding:10px 12px;display:flex;align-items:center;gap:11px;max-width:calc(100% - 25px)}
+.pitch-control[hidden]{display:none}.pitch-control label{font-size:11px;font-weight:700;color:#36594b;white-space:nowrap}
+.pitch-control input{width:140px;max-width:35vw;accent-color:#346d55}
+@media(max-width:750px){
+ .track-list{display:block!important;max-height:225px;overflow-y:auto}
+ .route-row{min-height:49px}.route-tools{gap:4px}.route-tool{width:29px}
+ .map-head{gap:9px}.map-head-actions{flex-wrap:nowrap}.map-head-actions .button{font-size:10px;padding:8px 9px}
+ .pitch-control{bottom:33px;left:8px;padding:8px 9px}.pitch-control input{width:98px;max-width:34vw}
+ .measure-panel{padding:9px 11px}.measure-readout{font-size:11px}
+}
 </style></head><body>
 <header class="site-head">
   <div class="logo"><div class="logo-mark" aria-hidden="true">⌁</div><div><strong>desconfinar.</strong><small>ANÁLISE DE CAMINHADAS</small></div></div>
@@ -79,11 +105,12 @@ button{transition:background .13s ease,border-color .13s ease}header.site-head{b
       
     </section>
     <section class="card map-card" data-pane="map" aria-labelledby="map-title">
-      <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa 2D dos percursos</strong></div><button class="button tiny" id="map-toggle" aria-expanded="true">Ocultar mapa</button></div>
+      <div class="map-head"><div><strong class="mini-title" id="map-title">Mapa dos percursos</strong></div><div class="map-head-actions"><button class="button tiny" id="measure-toggle" type="button" aria-pressed="false">Medir distâncias</button><button class="button tiny" id="map-toggle" aria-expanded="true">Ocultar mapa</button></div></div>
       <div id="map-surface"><div id="map"></div><div class="map-tools">
         <div class="mode-switch" role="group" aria-label="Modo do mapa"><button id="mode-2d" class="active" aria-pressed="true">Mapa 2D</button><button id="mode-3d" aria-pressed="false">Relevo 3D</button></div>
         <div class="map-actions"><button id="satellite-mode" title="Vista satélite" aria-label="Vista satélite">Satélite</button><button id="fit-all-map" title="Enquadrar percursos" aria-label="Enquadrar percursos">Ver todos</button><button id="reset-view" title="Centrar na Freita">Freita</button></div>
-      </div><div class="map-status" id="map-status" role="status"></div></div>
+      </div><div class="pitch-control" id="pitch-control" hidden><label for="pitch-slider">Inclinação <strong id="pitch-label">78°</strong></label><input type="range" min="45" max="85" step="1" value="78" id="pitch-slider" aria-label="Inclinação do relevo 3D"></div><div class="map-status" id="map-status" role="status"></div></div>
+      <div class="measure-panel" id="measure-panel" hidden><span class="measure-readout" id="measure-readout">Clica no mapa para marcar o primeiro ponto.</span><div class="measure-actions"><button class="button tiny" id="measure-undo" type="button">Desfazer</button><button class="button tiny" id="measure-clear" type="button">Limpar pontos</button></div></div>
     </section>
     <section class="card profile-card" data-pane="compare" aria-labelledby="overlay-title">
       <div class="section-header"><div><h2 id="overlay-title">Perfis altimétricos sobrepostos</h2></div></div>
@@ -224,9 +251,9 @@ function addMapData(){if(!map)return;if(!map.getSource('profile-cursor'))map.add
 function drawRoute(r){if(!mapReady||!map)return;const source='track-'+r.id,under='track-under-'+r.id,line='track-line-'+r.id;if(!map.getSource(source))map.addSource(source,{type:'geojson',data:geoFor(r)});
  if(!map.getLayer(under))map.addLayer({id:under,type:'line',source,layout:{'line-join':'round','line-cap':'round','visibility':r.visible?'visible':'none'},paint:{'line-color':'#ffffff','line-width':7,'line-opacity':0.95}});
  if(!map.getLayer(line))map.addLayer({id:line,type:'line',source,layout:{'line-join':'round','line-cap':'round','visibility':r.visible?'visible':'none'},paint:{'line-color':r.color,'line-width':selectedId===r.id?5:3.6,'line-opacity':selectedId===r.id?1:.93}});
- map.on('click',line,()=>selectRoute(r.id));map.on('mouseenter',line,()=>{map.getCanvas().style.cursor='pointer';});map.on('mouseleave',line,()=>{map.getCanvas().style.cursor='';});
+ map.on('click',line,()=>{if(!measureActive)selectRoute(r.id);});map.on('mouseenter',line,()=>{if(!measureActive)map.getCanvas().style.cursor='pointer';});map.on('mouseleave',line,()=>{map.getCanvas().style.cursor=measureActive?'crosshair':'';});
  // Keep profile hover marker above the routes.
- for(const layerId of ['route-endpoints','profile-cursor']){if(map.getLayer(layerId))map.moveLayer(layerId);}
+ for(const layerId of ['route-endpoints','profile-cursor','measure-outline','measure-line','measure-points','measure-labels']){if(map.getLayer(layerId))map.moveLayer(layerId);}
 }
 function refreshMapStyles(){if(!mapReady||!map)return;for(const r of routes){const line='track-line-'+r.id,under='track-under-'+r.id;for(const layer of [line,under])if(map.getLayer(layer))map.setLayoutProperty(layer,'visibility',r.visible?'visible':'none');if(map.getLayer(line))map.setPaintProperty(line,'line-width',r.id===selectedId?5.7:3.6);}
  const active=routes.find(r=>r.id===selectedId&&r.visible);map.getSource('route-endpoints')?.setData(active?startEndGeo(active):emptyGeo);
@@ -234,7 +261,7 @@ function refreshMapStyles(){if(!mapReady||!map)return;for(const r of routes){con
 }
 function removeMapRoute(id){if(!map||!mapReady)return;for(const lid of ['track-line-'+id,'track-under-'+id])if(map.getLayer(lid))map.removeLayer(lid);if(map.getSource('track-'+id))map.removeSource('track-'+id);}
 function getBounds(rs){let minLon=Infinity,minLat=Infinity,maxLon=-Infinity,maxLat=-Infinity;for(const r of rs){for(const s of r.segments)for(const p of s){minLon=Math.min(minLon,p.lon);minLat=Math.min(minLat,p.lat);maxLon=Math.max(maxLon,p.lon);maxLat=Math.max(maxLat,p.lat);}}return Number.isFinite(minLon)?[[minLon,minLat],[maxLon,maxLat]]:null;}
-function zoomTo(rs){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}const bounds=getBounds(rs);if(!bounds){toast('Não existem percursos visíveis.');return;}const pad=window.innerWidth<681?45:65;map.fitBounds(bounds,{padding:{top:Math.max(80,pad),right:pad,bottom:pad,left:pad},maxZoom:15.3,duration:700,pitch:is3D?55:0});}
+function zoomTo(rs){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}const bounds=getBounds(rs);if(!bounds){toast('Não existem percursos visíveis.');return;}const pad=window.innerWidth<681?45:65;map.fitBounds(bounds,{padding:{top:Math.max(80,pad),right:pad,bottom:pad,left:pad},maxZoom:15.3,duration:700,pitch:is3D?Number($('pitch-slider').value):0});}
 function routeCountText(n){return n===1?'1 trilho':n+' trilhos';}
 function el(tag,cls,text){const a=document.createElement(tag);if(cls)a.className=cls;if(text!==undefined)a.textContent=text;return a;}
 
@@ -258,27 +285,25 @@ function setView(view){
 
 function pct(n){return n==null||!Number.isFinite(n)?'—':n.toLocaleString('pt-PT',{maximumFractionDigits:1,minimumFractionDigits:1})+' %';}
 function renderList(){
-  const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
-  const filtered=routes;
-  if(!filtered.length){list.append(el('div','empty-list','Sem percursos.'));return;}
-  for(const r of filtered){
-    const item=el('article','track'+(selectedId===r.id?' selected':''));
-    const top=el('div','track-top');
-    const checkbox=el('input','vis');checkbox.type='checkbox';checkbox.checked=r.visible;checkbox.setAttribute('aria-label','Comparar '+r.name);
-    checkbox.title='Incluir na comparação';
-    checkbox.onchange=()=>{if(checkbox.checked&&routes.filter(x=>x.visible).length>=4){checkbox.checked=false;toast('Podes comparar até quatro percursos. Desmarca um antes de adicionar outro.');return;}r.visible=checkbox.checked;refreshMapStyles();renderList();renderComparison();};
-    const dot=el('span','color-dot');dot.style.backgroundColor=r.color;
-    const body=el('div','track-body');
-    const name=el('button','track-name',r.name);name.title='Ver análise individual';name.onclick=()=>selectRoute(r.id);
-    body.append(name,el('div','track-meta',r.demo?'Exemplo fictício':r.format+' · '+r.sourceName));
-    if(r.demo)body.append(el('span','pill-demo','DEMONSTRAÇÃO'));
-    top.append(checkbox,dot,body);item.append(top);
-    const metrics=el('div','track-metrics');for(const [label,value] of [['Dist.',fmtKm(r.stats.distance)],['D+',r.stats.hasElevation?fmtM(r.stats.ascent):'—']]){const m=el('span');m.append(document.createTextNode(label+' '),el('b',null,value));metrics.append(m);}item.append(metrics);
-    const actions=el('div','track-actions');const details=el('button',null,'Analisar');details.onclick=()=>selectRoute(r.id);
-    const showMap=el('button',null,'Ver no mapa');showMap.onclick=()=>{if(!r.visible){if(routes.filter(x=>x.visible).length>=4){toast('Desmarca um percurso para veres este em conjunto.');return;}r.visible=true;renderList();renderComparison();}setView('map');openMap(()=>zoomTo([r]));};
-    const remove=el('button',null,'Remover');remove.onclick=()=>removeRoute(r.id);
-    actions.append(details,showMap,remove);item.append(actions);list.append(item);
-  }
+ const list=$('track-list');list.replaceChildren();$('route-count').textContent=routeCountText(routes.length);
+ if(!routes.length){list.append(el('div','empty-list','Sem percursos.'));return;}
+ for(const r of routes){
+   const item=el('div','route-row'+(selectedId===r.id?' selected':''));
+   const visible=el('input','route-checkbox');visible.type='checkbox';visible.checked=r.visible;
+   visible.title='Incluir na comparação';visible.setAttribute('aria-label','Incluir '+r.name+' na comparação');
+   visible.onchange=()=>{if(visible.checked&&routes.filter(x=>x.visible).length>=4){visible.checked=false;toast('Máximo de 4 percursos na comparação.');return;}r.visible=visible.checked;refreshMapStyles();renderList();renderComparison();};
+   const dot=el('span','route-swatch');dot.style.backgroundColor=r.color;
+   const main=el('div','route-info');const title=el('button','route-name',r.name);title.title=r.name;title.onclick=()=>selectRoute(r.id);
+   const summary=el('span','route-summary',fmtKm(r.stats.distance)+' · D+ '+(r.stats.hasElevation?fmtM(r.stats.ascent):'—')+(r.demo?' · Exemplo':''));
+   main.append(title,summary);
+   const actions=el('div','route-tools');
+   const inspect=el('button','route-tool','▤');inspect.type='button';inspect.title='Analisar '+r.name;inspect.setAttribute('aria-label','Analisar '+r.name);inspect.onclick=()=>selectRoute(r.id);
+   const locate=el('button','route-tool','⌖');locate.type='button';locate.title='Ver no mapa';locate.setAttribute('aria-label','Ver '+r.name+' no mapa');
+   locate.onclick=()=>{if(!r.visible){if(routes.filter(x=>x.visible).length>=4){toast('Desmarca um percurso para ver este no mapa.');return;}r.visible=true;renderList();renderComparison();}setView('map');openMap(()=>zoomTo([r]));};
+   const remove=el('button','route-tool route-remove','×');remove.type='button';remove.title='Remover percurso';remove.setAttribute('aria-label','Remover '+r.name);remove.onclick=()=>removeRoute(r.id);
+   actions.append(inspect,locate,remove);
+   item.append(visible,dot,main,actions);list.append(item);
+ }
 }
 function selectRoute(id){
   const r=routes.find(x=>x.id===id);if(!r)return;selectedId=id;
@@ -301,8 +326,8 @@ function loadDemo(){if(routes.some(r=>r.demo)){toast('Os exemplos fictícios já
  for(let j=0;j<configs.length;j++){const c=configs[j],seg=[];for(let i=0;i<=c.count;i++){const t=i/c.count,angle=2*Math.PI*t,lon=starts[j][0]+.026*Math.sin(angle)+c.shift*Math.sin(Math.PI*t)*Math.cos(2*angle),lat=starts[j][1]+.018*Math.cos(angle)+c.shift*.68*Math.sin(3*angle)*Math.sin(Math.PI*t),ele=670+c.gain*(.5+.40*Math.sin(2*Math.PI*t+c.phase))+.3*c.gain*Math.sin(6*Math.PI*t);seg.push({lon,lat,ele,time:null});}const allowed=routes.filter(r=>r.visible).length<4;const addedRoute=addRoute({segments:[seg],name:c.name,format:'GPX'},'exemplo fictício',true);addedRoute.visible=allowed;added.push(addedRoute);}
  renderList();refreshMapStyles();renderComparison();toast('3 percursos fictícios carregados para experimentares a comparação.');}
 function toggleSatellite(){if(!mapReady){toast('O mapa ainda está a iniciar.');return;}isSatellite=!isSatellite;const id='satellite-layer';try{if(isSatellite&&!map.getSource('satellite-img'))map.addSource('satellite-img',{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagens © Esri, Maxar, Earthstar Geographics, GIS User Community'});if(isSatellite&&!map.getLayer(id)){const firstTrack=routes.find(r=>map.getLayer('track-under-'+r.id));const before=firstTrack?'track-under-'+firstTrack.id:(map.getLayer('route-endpoints')?'route-endpoints':undefined);map.addLayer({id,type:'raster',source:'satellite-img',paint:{'raster-opacity':1}},before);}if(map.getLayer(id))map.setLayoutProperty(id,'visibility',isSatellite?'visible':'none');$('satellite-mode').classList.toggle('active',isSatellite);$('satellite-mode').setAttribute('aria-pressed',String(isSatellite));}catch(e){toast('Não foi possível mudar para imagens de satélite.');isSatellite=false;}}
-function setMode(terrain){is3D=terrain;$('mode-2d').classList.toggle('active',!terrain);$('mode-3d').classList.toggle('active',terrain);$('mode-2d').setAttribute('aria-pressed',String(!terrain));$('mode-3d').setAttribute('aria-pressed',String(terrain));if(!mapReady){toast('O mapa ainda está a iniciar.');return;}try{
- if(terrain){if(!map.getSource('terrain-dem'))map.addSource('terrain-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:14,encoding:'terrarium',attribution:'Mapzen Terrain Tiles · AWS Open Data'});map.setTerrain({source:'terrain-dem',exaggeration:1});map.setProjection({type:'globe'});map.easeTo({pitch:66,bearing:-22,duration:900});status('Relevo 3D ativo. Arrasta para rodar e inclinar; depende da ligação aos dados de altitude.',true);setTimeout(()=>status('',false),5500);}else{map.setTerrain(null);map.setProjection({type:'mercator'});map.easeTo({pitch:0,bearing:0,duration:750});status('',false);}
+function setMode(terrain){is3D=terrain;$('pitch-control').hidden=!terrain;$('mode-2d').classList.toggle('active',!terrain);$('mode-3d').classList.toggle('active',terrain);$('mode-2d').setAttribute('aria-pressed',String(!terrain));$('mode-3d').setAttribute('aria-pressed',String(terrain));if(!mapReady){toast('O mapa ainda está a iniciar.');return;}try{
+ if(terrain){if(!map.getSource('terrain-dem'))map.addSource('terrain-dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,maxzoom:14,encoding:'terrarium',attribution:'Mapzen Terrain Tiles · AWS Open Data'});map.setTerrain({source:'terrain-dem',exaggeration:1});map.setProjection({type:'globe'});map.easeTo({pitch:Number($('pitch-slider').value),bearing:-10,duration:900});status('',false);}else{map.setTerrain(null);map.setProjection({type:'mercator'});map.easeTo({pitch:0,bearing:0,duration:750});status('',false);}
  }catch(e){status('Não foi possível ativar o relevo 3D: '+e.message,true);toast('Problema ao ativar o 3D. Experimenta voltar ao mapa 2D.');}}
 function renderProfile(r){const c=$('profile');const rect=c.getBoundingClientRect();const width=Math.max(250,Math.round(rect.width||370)),height=Math.max(80,Math.round(rect.height||118));const dpr=Math.min(2,window.devicePixelRatio||1);c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);const ctx=c.getContext('2d');if(!ctx)return;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
  let samples=r.stats.profile.filter(p=>p.e!==null);profileSamples=samples;if(samples.length<2){ctx.fillStyle='#8e9f94';ctx.font='12px system-ui';ctx.fillText('O ficheiro não contém altitudes suficientes.',10,height/2);$('chart-min').textContent='Sem dados de altitude';$('chart-max').textContent='';return;}
@@ -385,12 +410,47 @@ function renderOverlay(){
  c.onmousemove=e=>{const box=c.getBoundingClientRect();const px=(e.clientX-box.left)*(w/box.width);overlayHover=Math.max(0,Math.min(maxD,(px-pad.l)/innerW*maxD));renderOverlay();};
  c.onmouseleave=()=>{overlayHover=null;renderOverlay();};
 }
+
+let measureActive=false,measurePoints=[];
+function measureDistanceText(m){if(!Number.isFinite(m))return '—';return m<1000?Math.round(m).toLocaleString('pt-PT')+' m':(m/1000).toLocaleString('pt-PT',{minimumFractionDigits:2,maximumFractionDigits:2})+' km';}
+function measureTotal(points){let metres=0;for(let i=1;i<points.length;i++){metres+=haversine({lat:points[i-1].lat,lon:points[i-1].lon},{lat:points[i].lat,lon:points[i].lon});}return metres;}
+function addMeasureLayers(){
+ if(!mapReady||!map)return;
+ if(!map.getSource('measured-geometry'))map.addSource('measured-geometry',{type:'geojson',data:emptyGeo});
+ if(!map.getLayer('measure-outline'))map.addLayer({id:'measure-outline',source:'measured-geometry',type:'line',filter:['==',['geometry-type'],'LineString'],paint:{'line-color':'#173b35','line-width':6}});
+ if(!map.getLayer('measure-line'))map.addLayer({id:'measure-line',source:'measured-geometry',type:'line',filter:['==',['geometry-type'],'LineString'],paint:{'line-color':'#fbe77b','line-width':3,'line-dasharray':[2,1]}});
+ if(!map.getLayer('measure-points'))map.addLayer({id:'measure-points',source:'measured-geometry',type:'circle',filter:['==',['geometry-type'],'Point'],paint:{'circle-radius':7,'circle-color':'#fbe77b','circle-stroke-color':'#173b35','circle-stroke-width':2.5}});
+ if(!map.getLayer('measure-labels'))map.addLayer({id:'measure-labels',source:'measured-geometry',type:'symbol',filter:['==',['geometry-type'],'Point'],layout:{'text-field':['to-string',['get','order']],'text-size':10,'text-allow-overlap':true},paint:{'text-color':'#173b35'}});
+ renderMeasure();
+}
+function renderMeasure(){
+ const count=measurePoints.length,total=measureTotal(measurePoints);
+ let message=count===0?'Toca ou clica no mapa para marcar pontos.':count===1?'Ponto 1 marcado. Escolhe o seguinte.':count+' pontos · Total '+measureDistanceText(total)+' (em linha reta)';
+ if(count>1)message+=' · Último troço '+measureDistanceText(haversine(measurePoints[count-2],measurePoints[count-1]));
+ $('measure-readout').textContent=message;$('measure-undo').disabled=count===0;$('measure-clear').disabled=count===0;
+ if(mapReady&&map?.getSource('measured-geometry')){
+   const features=[];
+   if(count>=2)features.push({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:measurePoints.map(p=>[p.lon,p.lat])}});
+   measurePoints.forEach((p,i)=>features.push({type:'Feature',properties:{order:i+1},geometry:{type:'Point',coordinates:[p.lon,p.lat]}}));
+   map.getSource('measured-geometry').setData({type:'FeatureCollection',features});
+ }
+}
+function toggleMeasure(){
+ if(!mapReady){toast('O mapa ainda está a carregar.');return;}
+ measureActive=!measureActive;
+ $('measure-panel').hidden=!measureActive;$('measure-toggle').setAttribute('aria-pressed',String(measureActive));
+ $('measure-toggle').classList.toggle('measure-active',measureActive);
+ $('measure-toggle').textContent=measureActive?'Terminar medição':'Medir distâncias';
+ map.getCanvas().style.cursor=measureActive?'crosshair':'';
+ if(!measureActive){measurePoints=[];renderMeasure();}else renderMeasure();
+}
+
 function openMap(callback){if(!mapOpen){mapOpen=true;$('map-surface').hidden=false;$('map-toggle').textContent='Ocultar mapa';$('map-toggle').setAttribute('aria-expanded','true');if(!map)createMap();}
  requestAnimationFrame(()=>{if(map)map.resize();if(callback&&mapReady)callback();else if(!mapReady&&callback&&map)map.once('load',()=>{map.resize();callback();});});}
 function toggleMap(){if(mapOpen){mapOpen=false;$('map-surface').hidden=true;$('map-toggle').textContent='Abrir mapa';$('map-toggle').setAttribute('aria-expanded','false');}else openMap(()=>{if(routes.some(r=>r.visible))zoomTo(routes.filter(r=>r.visible));});}
 function createMap(){if(!maplibregl){status('O mapa não conseguiu carregar a biblioteca cartográfica.',true);return;}
- try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
- map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);refreshMapStyles();});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
+ try{map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[-8.265,40.868],zoom:11.5,pitch:0,bearing:0,maxPitch:85,attributionControl:true,antialias:true,hash:false,cooperativeGestures:false});map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'bottom-right');
+ map.on('load',()=>{mapReady=true;addMapData();for(const r of routes)drawRoute(r);addMeasureLayers();refreshMapStyles();});map.on('click',e=>{if(measureActive){measurePoints.push({lon:e.lngLat.lng,lat:e.lngLat.lat});renderMeasure();}});map.on('pitch',()=>{if(is3D){const pitch=Math.max(45,Math.min(85,Math.round(map.getPitch())));$('pitch-slider').value=String(pitch);$('pitch-label').textContent=pitch+'°';}});map.on('error',e=>{const message=String(e?.error?.message||'');if(message.includes('elevation-tiles')||message.includes('terrain')){status('Os dados de relevo não carregaram. Podes continuar a usar o mapa 2D.',true);}else if(!mapReady){status('Falha ao carregar os mapas. Verifica a ligação à Internet.',true);}});
  }catch(err){status('Não foi possível iniciar o mapa: '+err.message,true);}}
 document.querySelectorAll('.view-tab').forEach(button=>{button.onclick=()=>setView(button.dataset.view);});
 $('top-upload').onclick=()=>$('file-input').click();
@@ -401,7 +461,11 @@ $('satellite-mode').onclick=toggleSatellite;
 $('mode-2d').onclick=()=>setMode(false);
 $('mode-3d').onclick=()=>setMode(true);
 $('fit-all-map').onclick=()=>zoomTo(routes.filter(r=>r.visible));
-$('reset-view').onclick=()=>{if(mapReady)map.flyTo({center:[-8.265,40.868],zoom:11.5,pitch:is3D?60:0,duration:950});};
+$('reset-view').onclick=()=>{if(mapReady)map.flyTo({center:[-8.265,40.868],zoom:11.5,pitch:is3D?Number($('pitch-slider').value):0,duration:950});};
+$('pitch-slider').oninput=value=>{const p=Number($('pitch-slider').value);$('pitch-label').textContent=p+'°';if(mapReady&&is3D)map.setPitch(p);};
+$('measure-toggle').onclick=toggleMeasure;
+$('measure-undo').onclick=()=>{if(measurePoints.length){measurePoints.pop();renderMeasure();}};
+$('measure-clear').onclick=()=>{measurePoints=[];renderMeasure();};
 $('close-details').onclick=()=>{selectedId=null;$('details').classList.add('hide');renderList();refreshMapStyles();if(currentView==='analyse')setView('all');};
 $('slope-window').onchange=()=>{const r=routes.find(x=>x.id===selectedId);if(r)renderAdvanced(r);};
 window.addEventListener('resize',()=>{renderOverlay();if(selectedId){const r=routes.find(x=>x.id===selectedId);if(r)renderProfile(r);}if(mapOpen)map?.resize();});
