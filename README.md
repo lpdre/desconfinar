@@ -17,6 +17,12 @@ O site abre por defeito em **Tudo**, com comparação, mapa 2D e perfil altimét
 
 Para conhecer a interface sem GPX, escolhe **Experimentar com 3 exemplos fictícios**. Estes exemplos não correspondem a caminhos reais e não servem para navegação.
 
+## Lista, medição e relevo 3D
+
+- **Lista compacta:** cada percurso tem uma linha curta com nome truncado, distância, D+ e ações pequenas (analisar, enquadrar no mapa e remover). No telemóvel a lista tem altura limitada e deslocação vertical.
+- **Medir distâncias:** no cabeçalho do mapa, escolhe **Medir distâncias**. Clica ou toca em pontos sucessivos para medir a distância geodésica total em linha reta, com o valor do último segmento. Usa **Desfazer**, **Limpar pontos** ou **Terminar medição**. Não mede caminhos pedestres pela rede de trilhos nem leva altitudes em conta.
+- **Vista 3D:** há um regulador de inclinação entre 45° e 85°, para aproximar a câmara do horizonte. Inclinações superiores a 60° são experimentais no MapLibre e podem ter artefactos gráficos em alguns dispositivos.
+
 ## Condições e limitações
 
 - Apenas percursos pedestres. O GPX não identifica necessariamente o tipo de atividade; confirma os ficheiros carregados.
